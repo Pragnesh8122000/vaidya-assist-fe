@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5050/api';
+const API_URL = 'https://vaidya-assist-be.onrender.com/api';
 
 const api = axios.create({
   baseURL: API_URL,
