@@ -19,6 +19,7 @@ import Medicines from './pages/Medicines';
 import Files from './pages/Files';
 import Reports from './pages/Reports';
 import ChatPage from './pages/Chat';
+import AgentChatPage from './pages/AgentChat';
 import Assistants from './pages/Assistants';
 import Roles from './pages/Roles';
 import Settings from './pages/Settings';
@@ -68,6 +69,7 @@ const AppRoutes = () => {
             <Route path="files" element={<Files />} />
             <Route path="reports" element={<Reports />} />
             <Route path="chat" element={<ChatPage />} />
+            <Route path="agent" element={<AgentChatPage />} />
             <Route path="assistants" element={<Assistants />} />
             <Route path="roles" element={<Roles />} />
             <Route path="settings" element={<Settings />} />

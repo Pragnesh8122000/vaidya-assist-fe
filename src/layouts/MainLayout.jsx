@@ -26,6 +26,7 @@ import MedicalServicesIcon from '@mui/icons-material/MedicalServices';
 import FolderIcon from '@mui/icons-material/Folder';
 import AssessmentIcon from '@mui/icons-material/Assessment';
 import ChatIcon from '@mui/icons-material/Chat';
+import SmartToyIcon from '@mui/icons-material/SmartToy';
 import GroupAddIcon from '@mui/icons-material/GroupAdd';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import SettingsIcon from '@mui/icons-material/Settings';
@@ -39,6 +40,7 @@ import { useDispatch } from 'react-redux';
 import { logout } from '../features/authSlice';
 import { toggleSidebar, toggleDarkMode } from '../features/uiSlice';
 import api from '../api/axios';
+import AgentChatWidget from '../components/AgentChatWidget';
 
 const DRAWER_WIDTH = 260;
 const MINI_WIDTH = 72;
@@ -51,6 +53,7 @@ const menuItems = [
   { text: 'Files', icon: <FolderIcon />, path: '/files' },
   { text: 'Reports', icon: <AssessmentIcon />, path: '/reports' },
   { text: 'Chat', icon: <ChatIcon />, path: '/chat' },
+  { text: 'Agent', icon: <SmartToyIcon />, path: '/agent' },
   { text: 'Assistants', icon: <GroupAddIcon />, path: '/assistants' },
   { text: 'Roles', icon: <AdminPanelSettingsIcon />, path: '/roles' },
   { text: 'Settings', icon: <SettingsIcon />, path: '/settings' },
@@ -211,6 +214,8 @@ const MainLayout = () => {
         <Box component="main" sx={{ flex: 1, overflow: 'auto', p: 3 }}>
           <Outlet />
         </Box>
+
+        <AgentChatWidget />
       </Box>
     </Box>
   );
