@@ -284,11 +284,11 @@ const AgentChatWidget = () => {
                     <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
                       {msg.content}
                     </Typography>
-                    {msg.toolCalled && (
+                    {/* {msg.toolCalled && (
                       <Typography variant="caption" sx={{ opacity: 0.7, display: 'block', mt: 0.5 }}>
                         via {msg.toolName || 'tool'}
                       </Typography>
-                    )}
+                    )} */}
                   </Paper>
                 </Box>
               );
