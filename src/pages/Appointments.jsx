@@ -25,6 +25,10 @@ import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import SearchIcon from '@mui/icons-material/Search';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import { DatePicker, TimePicker } from '@mui/x-date-pickers';
+import dayjs from 'dayjs';
 import { toast } from 'react-toastify';
 import api from '../api/axios';
 import { getSocket } from '../socket/socket';
@@ -43,6 +47,7 @@ const Appointments = () => {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [form, setForm] = useState({ patient: '', date: '', time: '', status: 'Waiting', reason: '', notes: '' });
+  const [submitting, setSubmitting] = useState(false);
 
   const fetchAppointments = useCallback(async () => {
     try {
@@ -55,6 +60,16 @@ const Appointments = () => {
     } catch (err) { toast.error('Failed to load appointments'); }
     setLoading(false);
   }, [page, statusFilter]);
+
+  const filteredAppointments = appointments.filter((apt) => {
+    if (!search.trim()) return true;
+    const term = search.toLowerCase();
+    return (
+      apt.patient?.name?.toLowerCase().includes(term) ||
+      apt.reason?.toLowerCase().includes(term) ||
+      apt.status?.toLowerCase().includes(term)
+    );
+  });
 
   const fetchPatients = async () => {
     try {
@@ -80,6 +95,11 @@ const Appointments = () => {
   }, [fetchAppointments]);
 
   const handleSubmit = async () => {
+    if (!form.patient || !form.date || !form.time) {
+      toast.error('Patient, date and time are required');
+      return;
+    }
+    setSubmitting(true);
     try {
       if (editing) {
         await api.put(`/appointments/${editing._id}`, form);
@@ -92,14 +112,24 @@ const Appointments = () => {
       setEditing(null);
       setForm({ patient: '', date: '', time: '', status: 'Waiting', reason: '', notes: '' });
       fetchAppointments();
-    } catch (err) { toast.error(err.response?.data?.message || 'Error'); }
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Error');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleEdit = (apt) => {
     setEditing(apt);
+    // Stored dates are UTC midnight; build the edit date from UTC components
+    // so the input shows the original calendar day in every timezone.
+    const d = apt.date ? new Date(apt.date) : null;
+    const dateStr = d
+      ? `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`
+      : '';
     setForm({
       patient: apt.patient?._id || '',
-      date: apt.date?.split('T')[0] || '',
+      date: dateStr,
       time: apt.time, status: apt.status, reason: apt.reason || '', notes: apt.notes || ''
     });
     setDialogOpen(true);
@@ -156,10 +186,10 @@ const Appointments = () => {
             <TableBody>
               {loading ? (
                 <TableRow><TableCell colSpan={6} align="center"><CircularProgress size={24} /></TableCell></TableRow>
-              ) : appointments.length === 0 ? (
+              ) : filteredAppointments.length === 0 ? (
                 <TableRow><TableCell colSpan={6} align="center">No appointments found</TableCell></TableRow>
               ) : (
-                appointments.map((apt) => (
+                filteredAppointments.map((apt) => (
                   <TableRow key={apt._id} hover>
                     <TableCell>{apt.patient?.name || 'N/A'}</TableCell>
                     <TableCell>{new Date(apt.date).toLocaleDateString()}</TableCell>
@@ -193,11 +223,35 @@ const Appointments = () => {
                 {patients.map(p => <MenuItem key={p._id} value={p._id}>{p.name}</MenuItem>)}
               </TextField>
             </Grid>
-            <Grid size={{ xs: 6 }}>
-              <TextField fullWidth type="date" label="Date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} slotProps={{ inputLabel: { shrink: true } }} required />
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <DatePicker
+                label="Date"
+                value={form.date ? dayjs(form.date) : null}
+                onChange={(newValue) => setForm({ ...form, date: newValue ? newValue.format('YYYY-MM-DD') : '' })}
+                minDate={dayjs().startOf('day')}
+                slotProps={{
+                  textField: {
+                    fullWidth: true,
+                    required: true,
+                    slotProps: { input: { startAdornment: <InputAdornment position="start"><CalendarMonthIcon color="action" /></InputAdornment> } }
+                  }
+                }}
+              />
             </Grid>
-            <Grid size={{ xs: 6 }}>
-              <TextField fullWidth type="time" label="Time" value={form.time} onChange={(e) => setForm({ ...form, time: e.target.value })} slotProps={{ inputLabel: { shrink: true } }} required />
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <TimePicker
+                label="Time"
+                value={form.time ? dayjs(form.time, 'HH:mm') : null}
+                onChange={(newValue) => setForm({ ...form, time: newValue ? newValue.format('HH:mm') : '' })}
+                ampm={false}
+                slotProps={{
+                  textField: {
+                    fullWidth: true,
+                    required: true,
+                    slotProps: { input: { startAdornment: <InputAdornment position="start"><AccessTimeIcon color="action" /></InputAdornment> } }
+                  }
+                }}
+              />
             </Grid>
             <Grid size={{ xs: 12 }}>
               <TextField select fullWidth label="Status" value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
@@ -214,7 +268,9 @@ const Appointments = () => {
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button onClick={() => setDialogOpen(false)}>Cancel</Button>
-          <Button variant="contained" onClick={handleSubmit}>{editing ? 'Update' : 'Create'}</Button>
+          <Button variant="contained" onClick={handleSubmit} disabled={submitting}>
+            {submitting ? <CircularProgress size={20} color="inherit" /> : (editing ? 'Update' : 'Create')}
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>

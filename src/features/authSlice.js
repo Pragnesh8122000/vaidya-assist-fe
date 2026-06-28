@@ -1,4 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { toast } from 'react-toastify';
 import api from '../api/axios';
 
 export const login = createAsyncThunk('auth/login', async (credentials, { rejectWithValue }) => {
@@ -52,11 +53,29 @@ const authSlice = createSlice({
   extraReducers: (builder) => {
     builder
       .addCase(login.pending, (state) => { state.loading = true; state.error = null; })
-      .addCase(login.fulfilled, (state, action) => { state.loading = false; state.isAuthenticated = true; state.user = action.payload.user; })
-      .addCase(login.rejected, (state, action) => { state.loading = false; state.error = action.payload; })
+      .addCase(login.fulfilled, (state, action) => {
+        state.loading = false;
+        state.isAuthenticated = true;
+        state.user = action.payload.user;
+        toast.success(`Welcome back, ${action.payload.user.name || 'Admin'}!`);
+      })
+      .addCase(login.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+        toast.error(action.payload || 'Login failed. Please try again.');
+      })
       .addCase(register.pending, (state) => { state.loading = true; state.error = null; })
-      .addCase(register.fulfilled, (state, action) => { state.loading = false; state.isAuthenticated = true; state.user = action.payload.user; })
-      .addCase(register.rejected, (state, action) => { state.loading = false; state.error = action.payload; })
+      .addCase(register.fulfilled, (state, action) => {
+        state.loading = false;
+        state.isAuthenticated = true;
+        state.user = action.payload.user;
+        toast.success('Account created successfully!');
+      })
+      .addCase(register.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+        toast.error(action.payload || 'Registration failed. Please try again.');
+      })
       .addCase(getMe.fulfilled, (state, action) => { state.isAuthenticated = true; state.user = action.payload; })
       .addCase(getMe.rejected, (state) => { state.isAuthenticated = false; state.user = null; localStorage.removeItem('token'); localStorage.removeItem('refreshToken'); });
   },

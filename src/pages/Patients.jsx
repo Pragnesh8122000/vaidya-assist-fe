@@ -48,6 +48,7 @@ const Patients = () => {
   const [note, setNote] = useState('');
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [form, setForm] = useState({ name: '', age: '', gender: '', phone: '', email: '', address: '', bloodGroup: '' });
+  const [submitting, setSubmitting] = useState(false);
 
   const fetchPatients = useCallback(async () => {
     try {
@@ -64,8 +65,13 @@ const Patients = () => {
   useEffect(() => { fetchPatients(); }, [fetchPatients]);
 
   const handleSubmit = async () => {
+    if (!form.name?.trim()) {
+      toast.error('Patient name is required');
+      return;
+    }
+    setSubmitting(true);
     try {
-      const payload = { ...form, age: form.age ? parseInt(form.age) : undefined };
+      const payload = { ...form, name: form.name.trim(), age: form.age ? parseInt(form.age) : undefined };
       if (editing) {
         await api.put(`/patients/${editing._id}`, payload);
         toast.success('Patient updated');
@@ -77,7 +83,11 @@ const Patients = () => {
       setEditing(null);
       setForm({ name: '', age: '', gender: '', phone: '', email: '', address: '', bloodGroup: '' });
       fetchPatients();
-    } catch (err) { toast.error(err.response?.data?.message || 'Error'); }
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Error');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleEdit = (p) => {
@@ -184,7 +194,9 @@ const Patients = () => {
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button onClick={() => setDialogOpen(false)}>Cancel</Button>
-          <Button variant="contained" onClick={handleSubmit}>{editing ? 'Update' : 'Create'}</Button>
+          <Button variant="contained" onClick={handleSubmit} disabled={submitting}>
+            {submitting ? <CircularProgress size={20} color="inherit" /> : (editing ? 'Update' : 'Create')}
+          </Button>
         </DialogActions>
       </Dialog>
 

@@ -18,6 +18,7 @@ import PhoneIcon from '@mui/icons-material/Phone';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
+import { toast } from 'react-toastify';
 import { register, clearError } from '../features/authSlice';
 
 const Register = () => {
@@ -30,8 +31,22 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     dispatch(clearError());
-    const result = await dispatch(register(form));
-    if (result.type === 'auth/register/fulfilled') navigate('/');
+
+    if (!form.name?.trim() || !form.email?.trim() || !form.password) {
+      toast.error('Please fill all required fields');
+      return;
+    }
+    if (form.password.length < 6) {
+      toast.error('Password must be at least 6 characters');
+      return;
+    }
+
+    try {
+      await dispatch(register(form)).unwrap();
+      toast.success('Account created successfully');
+    } catch (err) {
+      toast.error(err || 'Registration failed');
+    }
   };
 
   return (

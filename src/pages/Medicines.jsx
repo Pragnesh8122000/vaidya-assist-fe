@@ -39,6 +39,7 @@ const Medicines = () => {
   const [search, setSearch] = useState('');
   const [lowStockFilter, setLowStockFilter] = useState(false);
   const [form, setForm] = useState({ name: '', genericName: '', stock: '', batchNumber: '', expiryDate: '', supplier: '', price: '', category: '', lowStockThreshold: '10' });
+  const [submitting, setSubmitting] = useState(false);
 
   const fetchMedicines = useCallback(async () => {
     try {
@@ -56,8 +57,19 @@ const Medicines = () => {
   useEffect(() => { fetchMedicines(); }, [fetchMedicines]);
 
   const handleSubmit = async () => {
+    if (!form.name?.trim() || form.stock === '' || Number.isNaN(parseInt(form.stock))) {
+      toast.error('Medicine name and valid stock are required');
+      return;
+    }
+    setSubmitting(true);
     try {
-      const payload = { ...form, stock: parseInt(form.stock), price: parseFloat(form.price), lowStockThreshold: parseInt(form.lowStockThreshold) || 10 };
+      const payload = {
+        ...form,
+        name: form.name.trim(),
+        stock: parseInt(form.stock),
+        price: parseFloat(form.price) || 0,
+        lowStockThreshold: parseInt(form.lowStockThreshold) || 10,
+      };
       if (editing) {
         await api.put(`/medicines/${editing._id}`, payload);
         toast.success('Medicine updated');
@@ -68,12 +80,32 @@ const Medicines = () => {
       setDialogOpen(false); setEditing(null);
       setForm({ name: '', genericName: '', stock: '', batchNumber: '', expiryDate: '', supplier: '', price: '', category: '', lowStockThreshold: '10' });
       fetchMedicines();
-    } catch (err) { toast.error(err.response?.data?.message || 'Error'); }
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Error');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleEdit = (m) => {
     setEditing(m);
-    setForm({ name: m.name, genericName: m.genericName || '', stock: m.stock.toString(), batchNumber: m.batchNumber || '', expiryDate: m.expiryDate?.split('T')[0] || '', supplier: m.supplier || '', price: m.price?.toString() || '', category: m.category || '', lowStockThreshold: m.lowStockThreshold?.toString() || '10' });
+    // Build expiry date from UTC components so the input shows the original
+    // calendar day regardless of the user's local timezone.
+    const d = m.expiryDate ? new Date(m.expiryDate) : null;
+    const expiryStr = d
+      ? `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`
+      : '';
+    setForm({
+      name: m.name,
+      genericName: m.genericName || '',
+      stock: m.stock.toString(),
+      batchNumber: m.batchNumber || '',
+      expiryDate: expiryStr,
+      supplier: m.supplier || '',
+      price: m.price?.toString() || '',
+      category: m.category || '',
+      lowStockThreshold: m.lowStockThreshold?.toString() || '10',
+    });
     setDialogOpen(true);
   };
 
@@ -174,7 +206,9 @@ const Medicines = () => {
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button onClick={() => setDialogOpen(false)}>Cancel</Button>
-          <Button variant="contained" onClick={handleSubmit}>{editing ? 'Update' : 'Add'}</Button>
+          <Button variant="contained" onClick={handleSubmit} disabled={submitting}>
+            {submitting ? <CircularProgress size={20} color="inherit" /> : (editing ? 'Update' : 'Add')}
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>
