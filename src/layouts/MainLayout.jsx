@@ -22,6 +22,7 @@ import { useTheme } from '@mui/material/styles';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import PeopleIcon from '@mui/icons-material/People';
+import PersonIcon from '@mui/icons-material/Person';
 import MedicalServicesIcon from '@mui/icons-material/MedicalServices';
 import FolderIcon from '@mui/icons-material/Folder';
 import AssessmentIcon from '@mui/icons-material/Assessment';
@@ -49,6 +50,7 @@ const menuItems = [
   { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
   { text: 'Appointments', icon: <CalendarMonthIcon />, path: '/appointments' },
   { text: 'Patients', icon: <PeopleIcon />, path: '/patients' },
+  { text: 'Doctors', icon: <PersonIcon />, path: '/doctors' },
   { text: 'Medicines', icon: <MedicalServicesIcon />, path: '/medicines' },
   { text: 'Files', icon: <FolderIcon />, path: '/files' },
   { text: 'Reports', icon: <AssessmentIcon />, path: '/reports' },

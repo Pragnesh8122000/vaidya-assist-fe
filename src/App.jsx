@@ -18,6 +18,7 @@ import Dashboard from './pages/Dashboard';
 import Appointments from './pages/Appointments';
 import Patients from './pages/Patients';
 import Medicines from './pages/Medicines';
+import Doctors from './pages/Doctors';
 import Files from './pages/Files';
 import Reports from './pages/Reports';
 import ChatPage from './pages/Chat';
@@ -77,6 +78,7 @@ const AppRoutes = () => {
             <Route index element={<Dashboard />} />
             <Route path="appointments" element={<Appointments />} />
             <Route path="patients" element={<Patients />} />
+            <Route path="doctors" element={<Doctors />} />
             <Route path="medicines" element={<Medicines />} />
             <Route path="files" element={<Files />} />
             <Route path="reports" element={<Reports />} />

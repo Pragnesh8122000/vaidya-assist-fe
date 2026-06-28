@@ -10,6 +10,7 @@ import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import Paper from '@mui/material/Paper';
 import CircularProgress from '@mui/material/CircularProgress';
+import Chip from '@mui/material/Chip';
 import CloseIcon from '@mui/icons-material/Close';
 import SmartToyIcon from '@mui/icons-material/SmartToy';
 import SendIcon from '@mui/icons-material/Send';
@@ -257,7 +258,7 @@ const AgentChatWidget = () => {
           >
             {messages.length === 0 && (
               <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', mt: 2 }}>
-                Ask me about low stock medicines, today&apos;s appointments, or upcoming appointments.
+                Ask me about low stock medicines, today&apos;s appointments, upcoming appointments, or doctors.
               </Typography>
             )}
 
@@ -309,6 +310,36 @@ const AgentChatWidget = () => {
               </Typography>
             )}
           </CardContent>
+
+          <Box
+            sx={{
+              px: 2,
+              pt: 1,
+              borderTop: 1,
+              borderColor: 'divider',
+              display: 'flex',
+              gap: 0.75,
+              flexWrap: 'wrap',
+            }}
+          >
+            {[
+              'List doctors',
+              "Today's appointments",
+              'Low stock medicines',
+              'Upcoming appointments',
+            ].map((label) => (
+              <Chip
+                key={label}
+                label={label}
+                size="small"
+                variant="outlined"
+                color="primary"
+                disabled={loading}
+                onClick={() => dispatch(sendMessage({ message: label }))}
+                sx={{ fontSize: '0.7rem', height: 24, borderRadius: 1.5 }}
+              />
+            ))}
+          </Box>
 
           <Box sx={{ p: 2, borderTop: 1, borderColor: 'divider', display: 'flex', gap: 1 }}>
             <TextField
