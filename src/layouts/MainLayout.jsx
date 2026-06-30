@@ -47,19 +47,34 @@ const DRAWER_WIDTH = 260;
 const MINI_WIDTH = 72;
 
 const menuItems = [
-  { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
-  { text: 'Appointments', icon: <CalendarMonthIcon />, path: '/appointments' },
-  { text: 'Patients', icon: <PeopleIcon />, path: '/patients' },
-  { text: 'Doctors', icon: <PersonIcon />, path: '/doctors' },
-  { text: 'Medicines', icon: <MedicalServicesIcon />, path: '/medicines' },
-  { text: 'Files', icon: <FolderIcon />, path: '/files' },
-  { text: 'Reports', icon: <AssessmentIcon />, path: '/reports' },
-  { text: 'Chat', icon: <ChatIcon />, path: '/chat' },
-  { text: 'Agent', icon: <SmartToyIcon />, path: '/agent' },
-  { text: 'Assistants', icon: <GroupAddIcon />, path: '/assistants' },
-  { text: 'Roles', icon: <AdminPanelSettingsIcon />, path: '/roles' },
-  { text: 'Settings', icon: <SettingsIcon />, path: '/settings' },
+  { text: 'Dashboard', icon: <DashboardIcon />, path: '/', roles: ['doctor', 'admin', 'staff'] },
+  { text: 'Appointments', icon: <CalendarMonthIcon />, path: '/appointments', roles: ['doctor', 'admin', 'staff'] },
+  { text: 'Patients', icon: <PeopleIcon />, path: '/patients', roles: ['doctor', 'admin', 'staff'] },
+  { text: 'Doctors', icon: <PersonIcon />, path: '/doctors', roles: ['admin', 'staff'] },
+  { text: 'Medicines', icon: <MedicalServicesIcon />, path: '/medicines', roles: ['doctor', 'admin', 'staff'] },
+  { text: 'Files', icon: <FolderIcon />, path: '/files', roles: ['doctor', 'admin', 'staff'] },
+  { text: 'Reports', icon: <AssessmentIcon />, path: '/reports', roles: ['admin', 'staff'] },
+  { text: 'Chat', icon: <ChatIcon />, path: '/chat', roles: ['doctor', 'admin', 'staff'] },
+  { text: 'Agent', icon: <SmartToyIcon />, path: '/agent', roles: ['admin', 'staff'] },
+  { text: 'Assistants', icon: <GroupAddIcon />, path: '/assistants', roles: ['admin', 'staff'] },
+  { text: 'Roles', icon: <AdminPanelSettingsIcon />, path: '/roles', roles: ['admin', 'staff'] },
+  { text: 'Settings', icon: <SettingsIcon />, path: '/settings', roles: ['admin', 'staff'] },
 ];
+
+// Resolve the role slug from the user object; fall back to the role name.
+const roleSlug = (user) => {
+  const slug = user?.role?.slug;
+  if (slug) return slug;
+  const name = (user?.role?.name || '').toLowerCase();
+  return name;
+};
+
+const visibleMenuItems = (user) => {
+  const slug = roleSlug(user);
+  // Unknown/missing role: show everything (preserves prior admin/staff access).
+  if (!slug) return menuItems;
+  return menuItems.filter((item) => item.roles.includes(slug));
+};
 
 const MainLayout = () => {
   const dispatch = useDispatch();
@@ -93,6 +108,7 @@ const MainLayout = () => {
   };
 
   const drawerWidth = sidebarOpen ? DRAWER_WIDTH : MINI_WIDTH;
+  const items = visibleMenuItems(user);
 
   const drawerContent = (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -115,7 +131,7 @@ const MainLayout = () => {
       </Box>
       <Divider />
       <List sx={{ flex: 1, px: 1, py: 1 }}>
-        {menuItems.map((item) => (
+        {items.map((item) => (
           <Tooltip key={item.text} title={!sidebarOpen ? item.text : ''} placement="right">
             <ListItemButton
               onClick={() => { navigate(item.path); if (isMobile) setMobileOpen(false); }}
@@ -169,7 +185,7 @@ const MainLayout = () => {
           <Toolbar>
             {isMobile && <IconButton onClick={() => setMobileOpen(true)} sx={{ mr: 1 }}><MenuIcon /></IconButton>}
             <Typography variant="h6" color="text.primary" fontWeight={600} sx={{ flex: 1 }}>
-              {menuItems.find(i => i.path === location.pathname)?.text || 'Vaidya Assist'}
+              {items.find(i => i.path === location.pathname)?.text || 'Vaidya Assist'}
             </Typography>
 
             <IconButton onClick={() => dispatch(toggleDarkMode())} sx={{ mr: 1 }}>

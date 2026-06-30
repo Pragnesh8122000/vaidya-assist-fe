@@ -26,6 +26,7 @@ import AgentChatPage from './pages/AgentChat';
 import Assistants from './pages/Assistants';
 import Roles from './pages/Roles';
 import Settings from './pages/Settings';
+import DoctorDashboard from './pages/DoctorDashboard';
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated } = useSelector((state) => state.auth);
@@ -41,6 +42,23 @@ const ProtectedRoute = ({ children }) => {
 
   if (!isAuthenticated) return <Navigate to="/login" />;
   return children;
+};
+
+// Role slug for routing decisions (mirrors MainLayout's roleSlug).
+const roleSlug = (user) => user?.role?.slug || (user?.role?.name || '').toLowerCase();
+
+// Gates a route so only non-doctor roles (admin/staff) can access it directly.
+const RoleRoute = ({ children }) => {
+  const { user } = useSelector((state) => state.auth);
+  if (roleSlug(user) === 'doctor') return <Navigate to="/" replace />;
+  return children;
+};
+
+// Pick the index page based on role: doctors get the DoctorDashboard, everyone
+// else keeps the existing analytics Dashboard.
+const HomeRoute = () => {
+  const { user } = useSelector((state) => state.auth);
+  return roleSlug(user) === 'doctor' ? <DoctorDashboard /> : <Dashboard />;
 };
 
 const AppRoutes = () => {
@@ -75,17 +93,17 @@ const AppRoutes = () => {
           <Route path="/login" element={isAuthenticated ? <Navigate to="/" /> : <Login />} />
           <Route path="/register" element={isAuthenticated ? <Navigate to="/" /> : <Register />} />
           <Route path="/" element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
-            <Route index element={<Dashboard />} />
+            <Route index element={<HomeRoute />} />
             <Route path="appointments" element={<Appointments />} />
             <Route path="patients" element={<Patients />} />
-            <Route path="doctors" element={<Doctors />} />
+            <Route path="doctors" element={<RoleRoute><Doctors /></RoleRoute>} />
             <Route path="medicines" element={<Medicines />} />
             <Route path="files" element={<Files />} />
-            <Route path="reports" element={<Reports />} />
+            <Route path="reports" element={<RoleRoute><Reports /></RoleRoute>} />
             <Route path="chat" element={<ChatPage />} />
-            <Route path="agent" element={<AgentChatPage />} />
-            <Route path="assistants" element={<Assistants />} />
-            <Route path="roles" element={<Roles />} />
+            <Route path="agent" element={<RoleRoute><AgentChatPage /></RoleRoute>} />
+            <Route path="assistants" element={<RoleRoute><Assistants /></RoleRoute>} />
+            <Route path="roles" element={<RoleRoute><Roles /></RoleRoute>} />
             <Route path="settings" element={<Settings />} />
           </Route>
           <Route path="*" element={<Navigate to="/" />} />
