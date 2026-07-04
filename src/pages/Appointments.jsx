@@ -33,8 +33,11 @@ import { toast } from 'react-toastify';
 import api from '../api/axios';
 import { getSocket } from '../socket/socket';
 
-const statusColors = { Waiting: 'warning', 'In Consultation': 'info', Completed: 'success', Cancelled: 'error' };
-const statuses = ['Waiting', 'In Consultation', 'Completed', 'Cancelled'];
+// §3.2 (OQ#3=Option B): 'Confirmed' added to match the backend enum. A
+// confirmed appointment is one staff has accepted from the Waiting queue —
+// render it as 'info' (distinct from the yellow Waiting badge).
+const statusColors = { Waiting: 'warning', Confirmed: 'info', 'In Consultation': 'info', Completed: 'success', Cancelled: 'error' };
+const statuses = ['Waiting', 'Confirmed', 'In Consultation', 'Completed', 'Cancelled'];
 
 const Appointments = () => {
   const [appointments, setAppointments] = useState([]);

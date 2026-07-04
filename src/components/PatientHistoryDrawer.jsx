@@ -14,8 +14,10 @@ import PersonIcon from '@mui/icons-material/Person';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import api from '../api/axios';
 
+// §3.2 (OQ#3=Option B): 'Confirmed' added to match the backend enum.
 const statusColors = {
   Waiting: 'warning',
+  Confirmed: 'info',
   'In Consultation': 'info',
   Completed: 'success',
   Cancelled: 'error',
