@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
@@ -49,37 +50,169 @@ const Register = () => {
     }
   };
 
-  return (
-    <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #0D47A1 0%, #1565C0 30%, #42A5F5 70%, #90CAF9 100%)' }}>
-      <Card sx={{ width: 420, mx: 2, overflow: 'visible', position: 'relative' }}>
-        <Box sx={{ width: 72, height: 72, borderRadius: '50%', background: 'linear-gradient(135deg, #1565C0, #42A5F5)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'absolute', top: -36, left: '50%', transform: 'translateX(-50%)', boxShadow: '0 4px 20px rgba(21,101,192,0.4)' }}>
-          <LocalHospitalIcon sx={{ fontSize: 36, color: '#fff' }} />
-        </Box>
-        <CardContent sx={{ pt: 6, px: 4, pb: 4 }}>
-          <Typography variant="h5" textAlign="center" fontWeight={700} gutterBottom>Create Account</Typography>
-          <Typography variant="body2" textAlign="center" color="text.secondary" sx={{ mb: 3 }}>Register as a Doctor</Typography>
+  const cardVariants = {
+    hidden: { opacity: 0, y: 30, scale: 0.97 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      scale: 1,
+      transition: { duration: 0.5, ease: 'easeOut' },
+    },
+  };
 
-          {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => dispatch(clearError())}>{error}</Alert>}
+  const logoVariants = {
+    hidden: { scale: 0, rotate: -180 },
+    visible: {
+      scale: 1,
+      rotate: 0,
+      transition: { duration: 0.8, ease: 'backOut' },
+    },
+  };
+
+  return (
+    <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: 'background.default', py: 4 }}>
+      <Card
+        component={motion.div}
+        variants={cardVariants}
+        initial="hidden"
+        animate="visible"
+        sx={{
+          width: { xs: 'calc(100% - 32px)', sm: 440 },
+          maxWidth: 440,
+          mx: 2,
+          overflow: 'visible',
+          position: 'relative',
+          borderTop: '4px solid #C8862A',
+        }}
+      >
+        <Box
+          component={motion.div}
+          variants={logoVariants}
+          initial="hidden"
+          animate="visible"
+          sx={{
+            width: 72,
+            height: 72,
+            borderRadius: '50%',
+            bgcolor: 'primary.main',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            position: 'absolute',
+            top: -36,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            boxShadow: '0 4px 20px rgba(33,28,22,0.2)',
+          }}
+        >
+          <LocalHospitalIcon sx={{ fontSize: 36, color: 'primary.contrastText' }} />
+        </Box>
+
+        <CardContent sx={{ pt: 6, px: 4, pb: 4 }}>
+          <Typography
+            variant="h4"
+            gutterBottom
+            sx={{ fontFamily: '"Crimson Pro", Georgia, serif', fontWeight: 700, textAlign: 'center' }}
+          >
+            Create Account
+          </Typography>
+          <Typography variant="body2" sx={{ textAlign: 'center', color: 'text.secondary', mb: 3 }}>
+            Register as a Doctor
+          </Typography>
+
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }} onClose={() => dispatch(clearError())}>
+              {String(error)}
+            </Alert>
+          )}
 
           <Box component="form" onSubmit={handleSubmit}>
-            <TextField fullWidth label="Full Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required sx={{ mb: 2 }}
-              slotProps={{ input: { startAdornment: <InputAdornment position="start"><PersonIcon color="action" /></InputAdornment> } }} />
-            <TextField fullWidth label="Email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required sx={{ mb: 2 }}
-              slotProps={{ input: { startAdornment: <InputAdornment position="start"><EmailIcon color="action" /></InputAdornment> } }} />
-            <TextField fullWidth label="Phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} sx={{ mb: 2 }}
-              slotProps={{ input: { startAdornment: <InputAdornment position="start"><PhoneIcon color="action" /></InputAdornment> } }} />
-            <TextField fullWidth label="Password" type={showPassword ? 'text' : 'password'} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required sx={{ mb: 3 }}
-              slotProps={{ input: {
-                startAdornment: <InputAdornment position="start"><LockIcon color="action" /></InputAdornment>,
-                endAdornment: <InputAdornment position="end"><IconButton onClick={() => setShowPassword(!showPassword)} edge="end">{showPassword ? <VisibilityOff /> : <Visibility />}</IconButton></InputAdornment>
-              } }} />
+            <TextField
+              fullWidth
+              label="Full Name"
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              required
+              sx={{ mb: 2 }}
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <PersonIcon color="action" />
+                    </InputAdornment>
+                  ),
+                },
+              }}
+            />
+            <TextField
+              fullWidth
+              label="Email"
+              type="email"
+              value={form.email}
+              onChange={(e) => setForm({ ...form, email: e.target.value })}
+              required
+              sx={{ mb: 2 }}
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <EmailIcon color="action" />
+                    </InputAdornment>
+                  ),
+                },
+              }}
+            />
+            <TextField
+              fullWidth
+              label="Phone"
+              value={form.phone}
+              onChange={(e) => setForm({ ...form, phone: e.target.value })}
+              sx={{ mb: 2 }}
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <PhoneIcon color="action" />
+                    </InputAdornment>
+                  ),
+                },
+              }}
+            />
+            <TextField
+              fullWidth
+              label="Password"
+              type={showPassword ? 'text' : 'password'}
+              value={form.password}
+              onChange={(e) => setForm({ ...form, password: e.target.value })}
+              required
+              sx={{ mb: 3 }}
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <LockIcon color="action" />
+                    </InputAdornment>
+                  ),
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
+                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                },
+              }}
+            />
             <Button type="submit" variant="contained" fullWidth size="large" disabled={loading} sx={{ py: 1.5, fontSize: '1rem' }}>
               {loading ? <CircularProgress size={24} color="inherit" /> : 'Register'}
             </Button>
           </Box>
 
-          <Typography variant="body2" textAlign="center" sx={{ mt: 3 }}>
-            Already have an account?{' '}<Link to="/login" style={{ color: '#1565C0', fontWeight: 600 }}>Sign In</Link>
+          <Typography variant="body2" sx={{ textAlign: 'center', mt: 3 }}>
+            Already have an account?{' '}
+            <Link to="/login" style={{ color: '#3D5A4C', fontWeight: 600 }}>
+              Sign In
+            </Link>
           </Typography>
         </CardContent>
       </Card>

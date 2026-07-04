@@ -23,6 +23,7 @@ import Grid from '@mui/material/Grid';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
+import Tooltip from '@mui/material/Tooltip';
 import { toast } from 'react-toastify';
 import api from '../api/axios';
 
@@ -83,12 +84,29 @@ const Assistants = () => {
         <TableContainer>
           <Table>
             <TableHead><TableRow>
-              <TableCell>Name</TableCell><TableCell>Email</TableCell><TableCell>Phone</TableCell><TableCell>Role</TableCell><TableCell>Status</TableCell><TableCell align="right">Actions</TableCell>
+              <TableCell>Username</TableCell><TableCell>Name</TableCell><TableCell>Email</TableCell><TableCell>Phone</TableCell><TableCell>Role</TableCell><TableCell>Status</TableCell><TableCell align="right">Actions</TableCell>
             </TableRow></TableHead>
             <TableBody>
-              {loading ? <TableRow><TableCell colSpan={6} align="center"><CircularProgress size={24} /></TableCell></TableRow>
+              {loading ? <TableRow><TableCell colSpan={7} align="center"><CircularProgress size={24} /></TableCell></TableRow>
               : users.map(u => (
                 <TableRow key={u._id} hover>
+                  <TableCell>
+                    <Tooltip title={u.username ? 'Click to copy' : 'No username yet'} placement="top">
+                      <Box
+                        component="code"
+                        onClick={() => u.username && navigator.clipboard?.writeText(u.username)}
+                        sx={{
+                          fontFamily: 'monospace',
+                          fontSize: 12,
+                          cursor: u.username ? 'pointer' : 'default',
+                          color: u.username ? 'text.primary' : 'text.disabled',
+                          '&:hover': u.username ? { color: 'primary.main' } : undefined,
+                        }}
+                      >
+                        {u.username || '—'}
+                      </Box>
+                    </Tooltip>
+                  </TableCell>
                   <TableCell sx={{ fontWeight: 500 }}>{u.name}</TableCell>
                   <TableCell>{u.email}</TableCell>
                   <TableCell>{u.phone}</TableCell>

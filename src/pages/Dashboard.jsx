@@ -3,6 +3,8 @@ import { motion } from 'framer-motion';
 import Grid from '@mui/material/Grid';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
+import Card from '@mui/material/Card';
+import CardContent from '@mui/material/CardContent';
 import CircularProgress from '@mui/material/CircularProgress';
 import PeopleIcon from '@mui/icons-material/People';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
@@ -11,10 +13,11 @@ import MedicalServicesIcon from '@mui/icons-material/MedicalServices';
 import WarningIcon from '@mui/icons-material/Warning';
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import api from '../api/axios';
-import AnimatedStatCard from '../components/AnimatedStatCard';
 import AnimatedChartCard from '../components/AnimatedChartCard';
 
-const COLORS = ['#1565C0', '#42A5F5', '#00897B', '#F57F17', '#C62828', '#7B1FA2'];
+// Warm Manuscript palette swatches — clinical green, sage, turmeric amber,
+// saffron, ink red, antique brass. Each maps cleanly to a theme token.
+const COLORS = ['#3D5A4C', '#4F7260', '#C8862A', '#B26A00', '#A23A2F', '#8E6B3A'];
 
 const Dashboard = () => {
   const [stats, setStats] = useState(null);
@@ -61,19 +64,80 @@ const Dashboard = () => {
 
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
-          <AnimatedStatCard title="Total Patients" value={stats?.totalPatients || 0} icon={<PeopleIcon sx={{ color: '#1565C0' }} />} color="#1565C0" />
+          <Card sx={{ height: '100%' }}>
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                <Box>
+                  <Typography variant="body2" color="text.secondary" gutterBottom>Total Patients</Typography>
+                  <Typography variant="h3" fontWeight={700} sx={{ color: '#3D5A4C' }}>{stats?.totalPatients || 0}</Typography>
+                </Box>
+                <Box sx={{ width: 48, height: 48, borderRadius: '12px', bgcolor: 'rgba(61,90,76,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <PeopleIcon sx={{ color: '#3D5A4C' }} />
+                </Box>
+              </Box>
+            </CardContent>
+          </Card>
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
-          <AnimatedStatCard title="Today's Appointments" value={stats?.todayAppointments || 0} icon={<CalendarMonthIcon sx={{ color: '#00897B' }} />} color="#00897B" />
+          <Card sx={{ height: '100%' }}>
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                <Box>
+                  <Typography variant="body2" color="text.secondary" gutterBottom>Today's Appointments</Typography>
+                  <Typography variant="h3" fontWeight={700} sx={{ color: '#4F7260' }}>{stats?.todayAppointments || 0}</Typography>
+                </Box>
+                <Box sx={{ width: 48, height: 48, borderRadius: '12px', bgcolor: 'rgba(79,114,96,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <CalendarMonthIcon sx={{ color: '#4F7260' }} />
+                </Box>
+              </Box>
+            </CardContent>
+          </Card>
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
-          <AnimatedStatCard title="Pending" value={stats?.pendingAppointments || 0} icon={<HourglassTopIcon sx={{ color: '#F57F17' }} />} color="#F57F17" />
+          <Card sx={{ height: '100%' }}>
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                <Box>
+                  <Typography variant="body2" color="text.secondary" gutterBottom>Pending</Typography>
+                  <Typography variant="h3" fontWeight={700} sx={{ color: '#C8862A' }}>{stats?.pendingAppointments || 0}</Typography>
+                </Box>
+                <Box sx={{ width: 48, height: 48, borderRadius: '12px', bgcolor: 'rgba(200,134,42,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <HourglassTopIcon sx={{ color: '#C8862A' }} />
+                </Box>
+              </Box>
+            </CardContent>
+          </Card>
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
-          <AnimatedStatCard title="Total Medicines" value={stats?.totalMedicines || 0} icon={<MedicalServicesIcon sx={{ color: '#7B1FA2' }} />} color="#7B1FA2" />
+          <Card sx={{ height: '100%' }}>
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                <Box>
+                  <Typography variant="body2" color="text.secondary" gutterBottom>Total Medicines</Typography>
+                  <Typography variant="h3" fontWeight={700} sx={{ color: '#8E6B3A' }}>{stats?.totalMedicines || 0}</Typography>
+                </Box>
+                <Box sx={{ width: 48, height: 48, borderRadius: '12px', bgcolor: 'rgba(142,107,58,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <MedicalServicesIcon sx={{ color: '#8E6B3A' }} />
+                </Box>
+              </Box>
+            </CardContent>
+          </Card>
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
-          <AnimatedStatCard title="Low Stock" value={stats?.lowStockMedicines || 0} icon={<WarningIcon sx={{ color: '#C62828' }} />} color="#C62828" subtitle="Need restock" />
+          <Card sx={{ height: '100%' }}>
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                <Box>
+                  <Typography variant="body2" color="text.secondary" gutterBottom>Low Stock</Typography>
+                  <Typography variant="h3" fontWeight={700} sx={{ color: '#A23A2F' }}>{stats?.lowStockMedicines || 0}</Typography>
+                  <Typography variant="caption" color="text.secondary">Need restock</Typography>
+                </Box>
+                <Box sx={{ width: 48, height: 48, borderRadius: '12px', bgcolor: 'rgba(162,58,47,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <WarningIcon sx={{ color: '#A23A2F' }} />
+                </Box>
+              </Box>
+            </CardContent>
+          </Card>
         </Grid>
       </Grid>
 
@@ -87,9 +151,9 @@ const Dashboard = () => {
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="count" fill="#1565C0" name="Total" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="completed" fill="#00897B" name="Completed" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="cancelled" fill="#C62828" name="Cancelled" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="count" fill="#3D5A4C" name="Total" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="completed" fill="#4F7260" name="Completed" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="cancelled" fill="#A23A2F" name="Cancelled" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </AnimatedChartCard>
@@ -115,8 +179,8 @@ const Dashboard = () => {
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Line type="monotone" dataKey="visits" stroke="#1565C0" strokeWidth={2} name="Total Visits" />
-                <Line type="monotone" dataKey="uniquePatients" stroke="#00897B" strokeWidth={2} name="Unique Patients" />
+                <Line type="monotone" dataKey="visits" stroke="#3D5A4C" strokeWidth={2} name="Total Visits" />
+                <Line type="monotone" dataKey="uniquePatients" stroke="#C8862A" strokeWidth={2} name="Unique Patients" />
               </LineChart>
             </ResponsiveContainer>
           </AnimatedChartCard>
@@ -129,7 +193,7 @@ const Dashboard = () => {
                 <XAxis type="number" />
                 <YAxis dataKey="_id" type="category" width={100} tick={{ fontSize: 11 }} />
                 <Tooltip />
-                <Bar dataKey="totalStock" fill="#42A5F5" name="Stock" radius={[0, 4, 4, 0]} />
+                <Bar dataKey="totalStock" fill="#4F7260" name="Stock" radius={[0, 4, 4, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </AnimatedChartCard>

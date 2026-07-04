@@ -19,10 +19,12 @@ import AddIcon from '@mui/icons-material/Add';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import EditNoteIcon from '@mui/icons-material/EditNote';
 import { toast } from 'react-toastify';
 import api from '../api/axios';
 import { getSocket } from '../socket/socket';
 import PatientHistoryDrawer from '../components/PatientHistoryDrawer';
+import PrescriptionDialog from '../components/PrescriptionDialog';
 
 const statusColors = {
   Waiting: 'warning',
@@ -51,6 +53,7 @@ const DoctorDashboard = () => {
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [drawerPatient, setDrawerPatient] = useState(null);
+  const [prescriptionApt, setPrescriptionApt] = useState(null);
 
   const fetchAppointments = useCallback(async () => {
     try {
@@ -98,10 +101,12 @@ const DoctorDashboard = () => {
       socket.on('appointment:updated', () => fetchAppointments());
       socket.on('appointment:created', () => fetchAppointments());
       socket.on('appointment:deleted', () => fetchAppointments());
+      socket.on('prescription:updated', () => fetchAppointments());
       return () => {
         socket.off('appointment:updated');
         socket.off('appointment:created');
         socket.off('appointment:deleted');
+        socket.off('prescription:updated');
       };
     }
   }, [fetchAppointments]);
@@ -282,10 +287,18 @@ const DoctorDashboard = () => {
                                 Advance
                               </Button>
                             )}
-                            {/* TODO: "Write prescription" action here once the
-                                backend /prescriptions module is integrated.
-                                Render a button on Completed rows that opens the
-                                prescription composer (being built in parallel). */}
+                            {col === 'Completed' && (
+                              <Button
+                                size="small"
+                                variant={apt.prescription ? 'outlined' : 'contained'}
+                                color={apt.prescription ? 'success' : 'primary'}
+                                startIcon={<EditNoteIcon sx={{ fontSize: 16 }} />}
+                                onClick={() => setPrescriptionApt(apt)}
+                                sx={{ minWidth: 0, px: 1, py: 0.25, fontSize: 12 }}
+                              >
+                                {apt.prescription ? 'Edit Rx' : 'Write Rx'}
+                              </Button>
+                            )}
                           </Stack>
                         </Box>
                       ))
@@ -301,6 +314,13 @@ const DoctorDashboard = () => {
         patientId={drawerPatient}
         open={Boolean(drawerPatient)}
         onClose={() => setDrawerPatient(null)}
+      />
+
+      <PrescriptionDialog
+        open={Boolean(prescriptionApt)}
+        appointment={prescriptionApt}
+        onClose={() => setPrescriptionApt(null)}
+        onSaved={fetchAppointments}
       />
     </Box>
   );

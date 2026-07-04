@@ -33,6 +33,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import SearchIcon from '@mui/icons-material/Search';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import NoteAddIcon from '@mui/icons-material/NoteAdd';
+import Tooltip from '@mui/material/Tooltip';
 import { toast } from 'react-toastify';
 import api from '../api/axios';
 
@@ -134,6 +135,7 @@ const Patients = () => {
           <Table>
             <TableHead>
               <TableRow>
+                <TableCell>ID</TableCell>
                 <TableCell>Name</TableCell>
                 <TableCell>Age</TableCell>
                 <TableCell>Gender</TableCell>
@@ -145,12 +147,29 @@ const Patients = () => {
             </TableHead>
             <TableBody>
               {loading ? (
-                <TableRow><TableCell colSpan={7} align="center"><CircularProgress size={24} /></TableCell></TableRow>
+                <TableRow><TableCell colSpan={8} align="center"><CircularProgress size={24} /></TableCell></TableRow>
               ) : patients.length === 0 ? (
-                <TableRow><TableCell colSpan={7} align="center">No patients found</TableCell></TableRow>
+                <TableRow><TableCell colSpan={8} align="center">No patients found</TableCell></TableRow>
               ) : (
                 patients.map((p) => (
                   <TableRow key={p._id} hover>
+                    <TableCell>
+                      <Tooltip title={p.displayId ? 'Click to copy' : 'No code yet'} placement="top">
+                        <Box
+                          component="code"
+                          onClick={() => p.displayId && navigator.clipboard?.writeText(p.displayId)}
+                          sx={{
+                            fontFamily: 'monospace',
+                            fontSize: 12,
+                            cursor: p.displayId ? 'pointer' : 'default',
+                            color: p.displayId ? 'text.primary' : 'text.disabled',
+                            '&:hover': p.displayId ? { color: 'primary.main' } : undefined,
+                          }}
+                        >
+                          {p.displayId || '—'}
+                        </Box>
+                      </Tooltip>
+                    </TableCell>
                     <TableCell sx={{ fontWeight: 500 }}>{p.name}</TableCell>
                     <TableCell>{p.age}</TableCell>
                     <TableCell>{p.gender}</TableCell>

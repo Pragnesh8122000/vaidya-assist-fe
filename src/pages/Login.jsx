@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -19,7 +19,6 @@ import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
 import { toast } from 'react-toastify';
 import { login, clearError } from '../features/authSlice';
-import ParticleBackground from '../components/ParticleBackground';
 
 const Login = () => {
   const dispatch = useDispatch();
@@ -27,20 +26,6 @@ const Login = () => {
   const { loading, error } = useSelector((state) => state.auth);
   const [form, setForm] = useState({ email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  const containerRef = useRef(null);
-
-  useEffect(() => {
-    const handleMouseMove = (e) => {
-      if (!containerRef.current) return;
-      const rect = containerRef.current.getBoundingClientRect();
-      const x = (e.clientX - rect.left) / rect.width - 0.5;
-      const y = (e.clientY - rect.top) / rect.height - 0.5;
-      setMousePosition({ x, y });
-    };
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -59,7 +44,7 @@ const Login = () => {
 
   const containerVariants = {
     hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { duration: 0.6 } }
+    visible: { opacity: 1, transition: { duration: 0.6 } },
   };
 
   const cardVariants = {
@@ -68,8 +53,8 @@ const Login = () => {
       opacity: 1,
       y: 0,
       scale: 1,
-      transition: { duration: 0.6, ease: 'easeOut' }
-    }
+      transition: { duration: 0.6, ease: 'easeOut' },
+    },
   };
 
   const inputVariants = {
@@ -77,8 +62,8 @@ const Login = () => {
     visible: (i) => ({
       opacity: 1,
       x: 0,
-      transition: { duration: 0.4, delay: 0.3 + i * 0.1 }
-    })
+      transition: { duration: 0.4, delay: 0.3 + i * 0.1 },
+    }),
   };
 
   const buttonVariants = {
@@ -86,13 +71,13 @@ const Login = () => {
     visible: {
       opacity: 1,
       scale: 1,
-      transition: { duration: 0.4, delay: 0.5 }
+      transition: { duration: 0.4, delay: 0.5 },
     },
     hover: {
       scale: 1.03,
-      boxShadow: '0 8px 25px rgba(21,101,192,0.4)',
-      transition: { duration: 0.2 }
-    }
+      boxShadow: '0 8px 25px rgba(33,28,22,0.18)',
+      transition: { duration: 0.2 },
+    },
   };
 
   const logoVariants = {
@@ -100,51 +85,156 @@ const Login = () => {
     visible: {
       scale: 1,
       rotate: 0,
-      transition: { duration: 0.8, ease: 'backOut' }
-    }
+      transition: { duration: 0.8, ease: 'backOut' },
+    },
   };
 
   return (
-    <Box ref={containerRef} component={motion.div} variants={containerVariants} initial="hidden" animate="visible"
-      sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden',
-        background: 'linear-gradient(135deg, #0D47A1 0%, #1565C0 30%, #42A5F5 70%, #90CAF9 100%)' }}>
-      <ParticleBackground mousePosition={mousePosition} />
-
-      <Card component={motion.div} variants={cardVariants} initial="hidden" animate="visible"
-        sx={{ width: 420, mx: 2, overflow: 'visible', position: 'relative', zIndex: 1 }}>
-        <Box component={motion.div} variants={logoVariants} initial="hidden" animate="visible"
-          sx={{ width: 72, height: 72, borderRadius: '50%', background: 'linear-gradient(135deg, #1565C0, #42A5F5)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'absolute', top: -36, left: '50%',
-            transform: 'translateX(-50%)', boxShadow: '0 4px 20px rgba(21,101,192,0.4)' }}>
-          <LocalHospitalIcon sx={{ fontSize: 36, color: '#fff' }} />
+    <Box
+      component={motion.div}
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+      sx={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        position: 'relative',
+        overflow: 'hidden',
+        bgcolor: 'background.default',
+        py: 4,
+      }}
+    >
+      <Card
+        component={motion.div}
+        variants={cardVariants}
+        initial="hidden"
+        animate="visible"
+        sx={{
+          width: { xs: 'calc(100% - 32px)', sm: 440 },
+          maxWidth: 440,
+          mx: 2,
+          overflow: 'visible',
+          position: 'relative',
+          zIndex: 1,
+          borderTop: '4px solid #C8862A',
+        }}
+      >
+        <Box
+          component={motion.div}
+          variants={logoVariants}
+          initial="hidden"
+          animate="visible"
+          sx={{
+            width: 72,
+            height: 72,
+            borderRadius: '50%',
+            bgcolor: 'primary.main',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            position: 'absolute',
+            top: -36,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            boxShadow: '0 4px 20px rgba(33,28,22,0.2)',
+          }}
+        >
+          <LocalHospitalIcon sx={{ fontSize: 36, color: 'primary.contrastText' }} />
         </Box>
-        <CardContent sx={{ pt: 6, px: 4, pb: 4 }}>
-          <Typography variant="h5" textAlign="center" fontWeight={700} gutterBottom>Welcome Back</Typography>
-          <Typography variant="body2" textAlign="center" color="text.secondary" sx={{ mb: 3 }}>Sign in to Vaidya Assist</Typography>
 
-          {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => dispatch(clearError())}>{error}</Alert>}
+        <CardContent sx={{ pt: 6, px: 4, pb: 4 }}>
+          <Typography
+            variant="h4"
+            gutterBottom
+            sx={{ fontFamily: '"Crimson Pro", Georgia, serif', fontWeight: 700, textAlign: 'center' }}
+          >
+            Welcome Back
+          </Typography>
+          <Typography variant="body2" sx={{ textAlign: 'center', color: 'text.secondary', mb: 3 }}>
+            Sign in to Vaidya Clinic Portal
+          </Typography>
+
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }} onClose={() => dispatch(clearError())}>
+              {String(error)}
+            </Alert>
+          )}
 
           <Box component="form" onSubmit={handleSubmit}>
-            <motion.div variants={inputVariants} custom={0}>
-              <TextField fullWidth label="Email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required sx={{ mb: 2 }}
-                slotProps={{ input: { startAdornment: <InputAdornment position="start"><EmailIcon color="action" /></InputAdornment> } }} />
-            </motion.div>
-            <motion.div variants={inputVariants} custom={1}>
-              <TextField fullWidth label="Password" type={showPassword ? 'text' : 'password'} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required sx={{ mb: 3 }}
-                slotProps={{ input: {
-                  startAdornment: <InputAdornment position="start"><LockIcon color="action" /></InputAdornment>,
-                  endAdornment: <InputAdornment position="end"><IconButton onClick={() => setShowPassword(!showPassword)} edge="end">{showPassword ? <VisibilityOff /> : <Visibility />}</IconButton></InputAdornment>
-                } }} />
-            </motion.div>
-            <motion.div variants={buttonVariants} initial="hidden" animate="visible" whileHover="hover">
-              <Button type="submit" variant="contained" fullWidth size="large" disabled={loading} sx={{ py: 1.5, fontSize: '1rem' }}>
+            <Box component={motion.div} variants={inputVariants} custom={0} initial="hidden" animate="visible">
+              <TextField
+                fullWidth
+                label="Email"
+                type="email"
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                required
+                sx={{ mb: 2.5 }}
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <EmailIcon color="action" />
+                      </InputAdornment>
+                    ),
+                  },
+                }}
+              />
+            </Box>
+
+            <Box component={motion.div} variants={inputVariants} custom={1} initial="hidden" animate="visible">
+              <TextField
+                fullWidth
+                label="Password"
+                type={showPassword ? 'text' : 'password'}
+                value={form.password}
+                onChange={(e) => setForm({ ...form, password: e.target.value })}
+                required
+                sx={{ mb: 1 }}
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <LockIcon color="action" />
+                      </InputAdornment>
+                    ),
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
+                          {showPassword ? <VisibilityOff /> : <Visibility />}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  },
+                }}
+              />
+            </Box>
+
+            <Box component={motion.div} variants={buttonVariants} initial="hidden" animate="visible" whileHover="hover">
+              <Button
+                type="submit"
+                variant="contained"
+                fullWidth
+                size="large"
+                disabled={loading}
+                sx={{ py: 1.5, fontSize: '1rem', mt: 2 }}
+              >
                 {loading ? <CircularProgress size={24} color="inherit" /> : 'Sign In'}
               </Button>
-            </motion.div>
+            </Box>
           </Box>
 
-          <Typography variant="body2" textAlign="center" sx={{ mt: 3 }}>
-            Don&apos;t have an account?{' '}<Link to="/register" style={{ color: '#1565C0', fontWeight: 600 }}>Register</Link>
+          <Typography variant="body2" sx={{ textAlign: 'center', mt: 3, color: 'text.secondary' }}>
+            Your data is encrypted and secure
+          </Typography>
+
+          <Typography variant="body2" sx={{ textAlign: 'center', mt: 2 }}>
+            Don&apos;t have an account?{' '}
+            <Link to="/register" style={{ color: '#3D5A4C', fontWeight: 600 }}>
+              Register
+            </Link>
           </Typography>
         </CardContent>
       </Card>

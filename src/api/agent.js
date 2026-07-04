@@ -53,10 +53,13 @@ agentApi.interceptors.response.use(
  *
  * @param {string} message - the user's current message
  * @param {Array<{role: 'user'|'assistant', content: string}>} [history] - conversation history
- * @returns {Promise<{content: string, toolCalled: boolean, toolName?: string}>}
+ * @param {object|null} [conversationState] - server-side slot-fill state, if any
+ * @returns {Promise<{content: string, toolCalled: boolean, toolName?: string, isEmergency?: boolean, conversationState?: object|null}>}
  */
-export async function sendAgentMessage(message, history = []) {
-  const { data } = await agentApi.post('/agent/message', { message, history });
+export async function sendAgentMessage(message, history = [], conversationState = null) {
+  const payload = { message, history };
+  if (conversationState) payload.conversationState = conversationState;
+  const { data } = await agentApi.post('/agent/message', payload);
   return data.data;
 }
 

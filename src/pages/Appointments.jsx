@@ -27,6 +27,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import SearchIcon from '@mui/icons-material/Search';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import Tooltip from '@mui/material/Tooltip';
 import { DatePicker, TimePicker } from '@mui/x-date-pickers';
 import dayjs from 'dayjs';
 import { toast } from 'react-toastify';
@@ -178,6 +179,7 @@ const Appointments = () => {
           <Table>
             <TableHead>
               <TableRow>
+                <TableCell>ID</TableCell>
                 <TableCell>Patient</TableCell>
                 <TableCell>Date</TableCell>
                 <TableCell>Time</TableCell>
@@ -188,12 +190,29 @@ const Appointments = () => {
             </TableHead>
             <TableBody>
               {loading ? (
-                <TableRow><TableCell colSpan={6} align="center"><CircularProgress size={24} /></TableCell></TableRow>
+                <TableRow><TableCell colSpan={7} align="center"><CircularProgress size={24} /></TableCell></TableRow>
               ) : filteredAppointments.length === 0 ? (
-                <TableRow><TableCell colSpan={6} align="center">No appointments found</TableCell></TableRow>
+                <TableRow><TableCell colSpan={7} align="center">No appointments found</TableCell></TableRow>
               ) : (
                 filteredAppointments.map((apt) => (
                   <TableRow key={apt._id} hover>
+                    <TableCell>
+                      <Tooltip title={apt.displayId ? 'Click to copy' : 'No code yet'} placement="top">
+                        <Box
+                          component="code"
+                          onClick={() => apt.displayId && navigator.clipboard?.writeText(apt.displayId)}
+                          sx={{
+                            fontFamily: 'monospace',
+                            fontSize: 12,
+                            cursor: apt.displayId ? 'pointer' : 'default',
+                            color: apt.displayId ? 'text.primary' : 'text.disabled',
+                            '&:hover': apt.displayId ? { color: 'primary.main' } : undefined,
+                          }}
+                        >
+                          {apt.displayId || '—'}
+                        </Box>
+                      </Tooltip>
+                    </TableCell>
                     <TableCell>{apt.patient?.name || 'N/A'}</TableCell>
                     <TableCell>{new Date(apt.date).toLocaleDateString()}</TableCell>
                     <TableCell>{apt.time}</TableCell>

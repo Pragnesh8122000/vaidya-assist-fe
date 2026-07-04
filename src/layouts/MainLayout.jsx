@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import Drawer from '@mui/material/Drawer';
@@ -24,24 +24,20 @@ import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import PeopleIcon from '@mui/icons-material/People';
 import PersonIcon from '@mui/icons-material/Person';
 import MedicalServicesIcon from '@mui/icons-material/MedicalServices';
-import FolderIcon from '@mui/icons-material/Folder';
 import AssessmentIcon from '@mui/icons-material/Assessment';
-import ChatIcon from '@mui/icons-material/Chat';
 import SmartToyIcon from '@mui/icons-material/SmartToy';
 import GroupAddIcon from '@mui/icons-material/GroupAdd';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import SettingsIcon from '@mui/icons-material/Settings';
 import MenuIcon from '@mui/icons-material/Menu';
-import Button from '@mui/material/Button';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import LogoutIcon from '@mui/icons-material/Logout';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
-import { useDispatch } from 'react-redux';
+import DescriptionIcon from '@mui/icons-material/Description';
 import { logout } from '../features/authSlice';
 import { toggleSidebar, toggleDarkMode } from '../features/uiSlice';
-import { openChat } from '../features/agentChatSlice';
 import api from '../api/axios';
 import AgentChatWidget from '../components/AgentChatWidget';
 
@@ -54,9 +50,8 @@ const menuItems = [
   { text: 'Patients', icon: <PeopleIcon />, path: '/patients', roles: ['doctor', 'admin', 'staff'] },
   { text: 'Doctors', icon: <PersonIcon />, path: '/doctors', roles: ['admin', 'staff'] },
   { text: 'Medicines', icon: <MedicalServicesIcon />, path: '/medicines', roles: ['doctor', 'admin', 'staff'] },
-  { text: 'Files', icon: <FolderIcon />, path: '/files', roles: ['doctor', 'admin', 'staff'] },
+  { text: 'Templates', icon: <DescriptionIcon />, path: '/templates', roles: ['admin', 'staff'] },
   { text: 'Reports', icon: <AssessmentIcon />, path: '/reports', roles: ['admin', 'staff'] },
-  { text: 'Chat', icon: <ChatIcon />, path: '/chat', roles: ['doctor', 'admin', 'staff'] },
   { text: 'Agent', icon: <SmartToyIcon />, path: '/agent', roles: ['admin', 'staff'] },
   { text: 'Assistants', icon: <GroupAddIcon />, path: '/assistants', roles: ['admin', 'staff'] },
   { text: 'Roles', icon: <AdminPanelSettingsIcon />, path: '/roles', roles: ['admin', 'staff'] },
@@ -117,10 +112,10 @@ const MainLayout = () => {
       <Box sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 1.5, minHeight: 64 }}>
         {sidebarOpen && (
           <>
-            <Box sx={{ width: 36, height: 36, borderRadius: '10px', background: 'linear-gradient(135deg, #1565C0, #42A5F5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <MedicalServicesIcon sx={{ color: '#fff', fontSize: 20 }} />
+            <Box sx={{ width: 36, height: 36, borderRadius: '10px', bgcolor: 'primary.main', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <MedicalServicesIcon sx={{ color: 'primary.contrastText', fontSize: 20 }} />
             </Box>
-            <Typography variant="h6" fontWeight={700} noWrap sx={{ background: 'linear-gradient(135deg, #1565C0, #42A5F5)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+            <Typography variant="h6" fontWeight={700} noWrap sx={{ color: 'primary.main' }}>
               Vaidya Assist
             </Typography>
           </>
@@ -142,9 +137,12 @@ const MainLayout = () => {
                 borderRadius: 2, mb: 0.5, minHeight: 44,
                 justifyContent: sidebarOpen ? 'initial' : 'center',
                 '&.Mui-selected': {
-                  background: 'linear-gradient(135deg, rgba(21,101,192,0.12), rgba(66,165,245,0.12))',
-                  '& .MuiListItemIcon-root': { color: '#1565C0' },
-                  '& .MuiListItemText-primary': { color: '#1565C0', fontWeight: 600 },
+                  bgcolor: 'action.hover',
+                  borderLeft: '4px solid',
+                  borderColor: 'secondary.main',
+                  pl: '12px', // compensate the 4px border so icon/text alignment holds
+                  '& .MuiListItemIcon-root': { color: 'primary.main' },
+                  '& .MuiListItemText-primary': { color: 'primary.main', fontWeight: 600 },
                 },
               }}
             >
@@ -156,7 +154,7 @@ const MainLayout = () => {
       </List>
       <Divider />
       <Box sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 1.5 }}>
-        <Avatar sx={{ width: 34, height: 34, bgcolor: '#1565C0', fontSize: 14 }}>{user?.name?.charAt(0)}</Avatar>
+        <Avatar sx={{ width: 34, height: 34, bgcolor: 'primary.main', fontSize: 14 }}>{user?.name?.charAt(0)}</Avatar>
         {sidebarOpen && (
           <Box sx={{ overflow: 'hidden' }}>
             <Typography variant="body2" fontWeight={600} noWrap>{user?.name}</Typography>
@@ -198,18 +196,8 @@ const MainLayout = () => {
               <Badge badgeContent={unreadCount} color="error"><NotificationsIcon /></Badge>
             </IconButton>
 
-            <Button
-              variant="contained"
-              size="small"
-              startIcon={<SmartToyIcon />}
-              onClick={() => dispatch(openChat())}
-              sx={{ mr: 1, textTransform: 'none', fontWeight: 600, borderRadius: 2, px: 1.5 }}
-            >
-              Assistant
-            </Button>
-
             <IconButton onClick={(e) => setUserAnchor(e.currentTarget)}>
-              <Avatar sx={{ width: 32, height: 32, bgcolor: '#1565C0', fontSize: 14 }}>{user?.name?.charAt(0)}</Avatar>
+              <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.main', fontSize: 14 }}>{user?.name?.charAt(0)}</Avatar>
             </IconButton>
 
             <Menu anchorEl={notifAnchor} open={Boolean(notifAnchor)} onClose={() => setNotifAnchor(null)} slotProps={{ paper: { sx: { width: 320, maxHeight: 400 } } }}>

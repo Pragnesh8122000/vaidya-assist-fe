@@ -19,13 +19,12 @@ import Appointments from './pages/Appointments';
 import Patients from './pages/Patients';
 import Medicines from './pages/Medicines';
 import Doctors from './pages/Doctors';
-import Files from './pages/Files';
 import Reports from './pages/Reports';
-import ChatPage from './pages/Chat';
 import AgentChatPage from './pages/AgentChat';
 import Assistants from './pages/Assistants';
 import Roles from './pages/Roles';
 import Settings from './pages/Settings';
+import Templates from './pages/Templates';
 import DoctorDashboard from './pages/DoctorDashboard';
 
 const ProtectedRoute = ({ children }) => {
@@ -98,9 +97,8 @@ const AppRoutes = () => {
             <Route path="patients" element={<Patients />} />
             <Route path="doctors" element={<RoleRoute><Doctors /></RoleRoute>} />
             <Route path="medicines" element={<Medicines />} />
-            <Route path="files" element={<Files />} />
+            <Route path="templates" element={<RoleRoute><Templates /></RoleRoute>} />
             <Route path="reports" element={<RoleRoute><Reports /></RoleRoute>} />
-            <Route path="chat" element={<ChatPage />} />
             <Route path="agent" element={<RoleRoute><AgentChatPage /></RoleRoute>} />
             <Route path="assistants" element={<RoleRoute><Assistants /></RoleRoute>} />
             <Route path="roles" element={<RoleRoute><Roles /></RoleRoute>} />

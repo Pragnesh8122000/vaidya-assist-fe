@@ -28,7 +28,7 @@ const Settings = () => {
             <CardContent>
               <Typography variant="h6" sx={{ mb: 2 }}>Profile</Typography>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-                <Avatar sx={{ width: 64, height: 64, bgcolor: '#1565C0', fontSize: 28 }}>{user?.name?.charAt(0)}</Avatar>
+                <Avatar sx={{ width: 64, height: 64, bgcolor: 'primary.main', fontSize: 28 }}>{user?.name?.charAt(0)}</Avatar>
                 <Box>
                   <Typography variant="h6">{user?.name}</Typography>
                   <Chip label={user?.role?.name} size="small" color="primary" icon={<ShieldIcon />} />
