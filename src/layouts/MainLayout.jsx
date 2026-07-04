@@ -32,6 +32,7 @@ import GroupAddIcon from '@mui/icons-material/GroupAdd';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import SettingsIcon from '@mui/icons-material/Settings';
 import MenuIcon from '@mui/icons-material/Menu';
+import Button from '@mui/material/Button';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import LightModeIcon from '@mui/icons-material/LightMode';
@@ -40,6 +41,7 @@ import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import { useDispatch } from 'react-redux';
 import { logout } from '../features/authSlice';
 import { toggleSidebar, toggleDarkMode } from '../features/uiSlice';
+import { openChat } from '../features/agentChatSlice';
 import api from '../api/axios';
 import AgentChatWidget from '../components/AgentChatWidget';
 
@@ -195,6 +197,16 @@ const MainLayout = () => {
             <IconButton onClick={(e) => setNotifAnchor(e.currentTarget)} sx={{ mr: 1 }}>
               <Badge badgeContent={unreadCount} color="error"><NotificationsIcon /></Badge>
             </IconButton>
+
+            <Button
+              variant="contained"
+              size="small"
+              startIcon={<SmartToyIcon />}
+              onClick={() => dispatch(openChat())}
+              sx={{ mr: 1, textTransform: 'none', fontWeight: 600, borderRadius: 2, px: 1.5 }}
+            >
+              Assistant
+            </Button>
 
             <IconButton onClick={(e) => setUserAnchor(e.currentTarget)}>
               <Avatar sx={{ width: 32, height: 32, bgcolor: '#1565C0', fontSize: 14 }}>{user?.name?.charAt(0)}</Avatar>
