@@ -28,6 +28,8 @@ import SearchIcon from '@mui/icons-material/Search';
 import WarningIcon from '@mui/icons-material/Warning';
 import { toast } from 'react-toastify';
 import api from '../api/axios';
+import ConfirmationDialog from '../components/ConfirmationDialog';
+import { EMPTY_MEDICINE_FORM } from '../types/forms';
 
 const Medicines = () => {
   const [medicines, setMedicines] = useState([]);
@@ -38,8 +40,10 @@ const Medicines = () => {
   const [editing, setEditing] = useState(null);
   const [search, setSearch] = useState('');
   const [lowStockFilter, setLowStockFilter] = useState(false);
-  const [form, setForm] = useState({ name: '', genericName: '', stock: '', batchNumber: '', expiryDate: '', supplier: '', price: '', category: '', lowStockThreshold: '10' });
+  const [form, setForm] = useState({ ...EMPTY_MEDICINE_FORM });
   const [submitting, setSubmitting] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
   const fetchMedicines = useCallback(async () => {
     try {
@@ -78,7 +82,7 @@ const Medicines = () => {
         toast.success('Medicine added');
       }
       setDialogOpen(false); setEditing(null);
-      setForm({ name: '', genericName: '', stock: '', batchNumber: '', expiryDate: '', supplier: '', price: '', category: '', lowStockThreshold: '10' });
+      setForm({ ...EMPTY_MEDICINE_FORM });
       fetchMedicines();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Error');
@@ -109,10 +113,18 @@ const Medicines = () => {
     setDialogOpen(true);
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Delete this medicine?')) return;
-    try { await api.delete(`/medicines/${id}`); toast.success('Medicine deleted'); fetchMedicines(); }
-    catch (err) { toast.error('Failed to delete'); }
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      await api.delete(`/medicines/${deleteTarget}`);
+      toast.success('Medicine deleted');
+      fetchMedicines();
+    } catch (err) { toast.error('Failed to delete'); }
+    finally {
+      setDeleting(false);
+      setDeleteTarget(null);
+    }
   };
 
   const isLowStock = (m) => m.stock <= m.lowStockThreshold;
@@ -123,7 +135,7 @@ const Medicines = () => {
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 2 }}>
         <Typography variant="h4">Medicine Inventory</Typography>
-        <Button variant="contained" startIcon={<AddIcon />} onClick={() => { setEditing(null); setForm({ name: '', genericName: '', stock: '', batchNumber: '', expiryDate: '', supplier: '', price: '', category: '', lowStockThreshold: '10' }); setDialogOpen(true); }}>
+        <Button variant="contained" startIcon={<AddIcon />} onClick={() => { setEditing(null); setForm({ ...EMPTY_MEDICINE_FORM }); setDialogOpen(true); }}>
           Add Medicine
         </Button>
       </Box>
@@ -178,7 +190,7 @@ const Medicines = () => {
                     <TableCell>₹{m.price}</TableCell>
                     <TableCell align="right">
                       <IconButton size="small" onClick={() => handleEdit(m)}><EditIcon fontSize="small" /></IconButton>
-                      <IconButton size="small" color="error" onClick={() => handleDelete(m._id)}><DeleteIcon fontSize="small" /></IconButton>
+                      <IconButton size="small" color="error" onClick={() => setDeleteTarget(m._id)}><DeleteIcon fontSize="small" /></IconButton>
                     </TableCell>
                   </TableRow>
                 ))
@@ -211,6 +223,17 @@ const Medicines = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <ConfirmationDialog
+        open={Boolean(deleteTarget)}
+        title="Delete medicine"
+        message="This will remove the medicine from your inventory. Stock and batch history will be lost."
+        confirmLabel="Delete"
+        destructive
+        loading={deleting}
+        onConfirm={handleDelete}
+        onCancel={() => !deleting && setDeleteTarget(null)}
+      />
     </Box>
   );
 };

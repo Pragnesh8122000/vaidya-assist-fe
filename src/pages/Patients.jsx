@@ -36,6 +36,8 @@ import NoteAddIcon from '@mui/icons-material/NoteAdd';
 import Tooltip from '@mui/material/Tooltip';
 import { toast } from 'react-toastify';
 import api from '../api/axios';
+import ConfirmationDialog from '../components/ConfirmationDialog';
+import { EMPTY_PATIENT_FORM } from '../types/forms';
 
 const Patients = () => {
   const [patients, setPatients] = useState([]);
@@ -48,8 +50,15 @@ const Patients = () => {
   const [search, setSearch] = useState('');
   const [note, setNote] = useState('');
   const [selectedPatient, setSelectedPatient] = useState(null);
-  const [form, setForm] = useState({ name: '', age: '', gender: '', phone: '', email: '', address: '', bloodGroup: '' });
+  const [form, setForm] = useState({ ...EMPTY_PATIENT_FORM });
   const [submitting, setSubmitting] = useState(false);
+  // SEC-6 / A11Y-1 fix: confirm destructive actions through a real
+  // focus-trapped dialog with aria wiring. The previous `window.confirm`
+  // path is not keyboard-reachable in the same way, gets blocked by
+  // some embedded browsers, and renders the operating-system chrome
+  // (which can fail WCAG 2.1 AA contrast requirements).
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
   const fetchPatients = useCallback(async () => {
     try {
@@ -82,7 +91,7 @@ const Patients = () => {
       }
       setDialogOpen(false);
       setEditing(null);
-      setForm({ name: '', age: '', gender: '', phone: '', email: '', address: '', bloodGroup: '' });
+      setForm({ ...EMPTY_PATIENT_FORM });
       fetchPatients();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Error');
@@ -97,13 +106,18 @@ const Patients = () => {
     setDialogOpen(true);
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Delete this patient?')) return;
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
     try {
-      await api.delete(`/patients/${id}`);
+      await api.delete(`/patients/${deleteTarget}`);
       toast.success('Patient deleted');
       fetchPatients();
     } catch (err) { toast.error('Failed to delete'); }
+    finally {
+      setDeleting(false);
+      setDeleteTarget(null);
+    }
   };
 
   const handleAddNote = async () => {
@@ -120,7 +134,7 @@ const Patients = () => {
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 2 }}>
         <Typography variant="h4">Patients</Typography>
-        <Button variant="contained" startIcon={<AddIcon />} onClick={() => { setEditing(null); setForm({ name: '', age: '', gender: '', phone: '', email: '', address: '', bloodGroup: '' }); setDialogOpen(true); }}>
+        <Button variant="contained" startIcon={<AddIcon />} onClick={() => { setEditing(null); setForm({ ...EMPTY_PATIENT_FORM }); setDialogOpen(true); }}>
           New Patient
         </Button>
       </Box>
@@ -179,7 +193,7 @@ const Patients = () => {
                     <TableCell align="right">
                       <IconButton size="small" onClick={() => { setSelectedPatient(p); setNoteDialog(true); }}><NoteAddIcon fontSize="small" /></IconButton>
                       <IconButton size="small" onClick={() => handleEdit(p)}><EditIcon fontSize="small" /></IconButton>
-                      <IconButton size="small" color="error" onClick={() => handleDelete(p._id)}><DeleteIcon fontSize="small" /></IconButton>
+                      <IconButton size="small" color="error" onClick={() => setDeleteTarget(p._id)}><DeleteIcon fontSize="small" /></IconButton>
                     </TableCell>
                   </TableRow>
                 ))
@@ -241,6 +255,17 @@ const Patients = () => {
           <Button variant="contained" onClick={handleAddNote} disabled={!note}>Add Note</Button>
         </DialogActions>
       </Dialog>
+
+      <ConfirmationDialog
+        open={Boolean(deleteTarget)}
+        title="Delete patient"
+        message="This patient and their notes will be removed. This action cannot be undone."
+        confirmLabel="Delete"
+        destructive
+        loading={deleting}
+        onConfirm={handleDelete}
+        onCancel={() => !deleting && setDeleteTarget(null)}
+      />
     </Box>
   );
 };

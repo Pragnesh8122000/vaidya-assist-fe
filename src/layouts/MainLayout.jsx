@@ -42,31 +42,31 @@ import { toggleSidebar, toggleDarkMode } from '../features/uiSlice';
 import { openChat as openAgentChat } from '../features/agentChatSlice';
 import api from '../api/axios';
 import AgentChatWidget from '../components/AgentChatWidget';
+import { ROLES, ALL_STAFF_ROLES, resolveRoleSlug } from '../types/auth';
 
 const DRAWER_WIDTH = 260;
 const MINI_WIDTH = 72;
 
+// Menu items use the typed ROLES constants. The route guard in App.jsx
+// uses the same allowlists, so a route a user can navigate to is one
+// they will see in the menu (ARCH-4 follow-up: see audit phase plan).
 const menuItems = [
-  { text: 'Dashboard', icon: <DashboardIcon />, path: '/', roles: ['doctor', 'admin', 'staff'] },
-  { text: 'Appointments', icon: <CalendarMonthIcon />, path: '/appointments', roles: ['doctor', 'admin', 'staff'] },
-  { text: 'Patients', icon: <PeopleIcon />, path: '/patients', roles: ['doctor', 'admin', 'staff'] },
-  { text: 'Doctors', icon: <PersonIcon />, path: '/doctors', roles: ['admin', 'staff'] },
-  { text: 'Medicines', icon: <MedicalServicesIcon />, path: '/medicines', roles: ['doctor', 'admin', 'staff'] },
-  { text: 'Templates', icon: <DescriptionIcon />, path: '/templates', roles: ['admin', 'staff'] },
-  { text: 'Reports', icon: <AssessmentIcon />, path: '/reports', roles: ['admin', 'staff'] },
-  { text: 'Agent', icon: <SmartToyIcon />, path: '/agent', roles: ['admin', 'staff'] },
-  { text: 'Assistants', icon: <GroupAddIcon />, path: '/assistants', roles: ['admin', 'staff'] },
-  { text: 'Roles', icon: <AdminPanelSettingsIcon />, path: '/roles', roles: ['admin', 'staff'] },
-  { text: 'Settings', icon: <SettingsIcon />, path: '/settings', roles: ['admin', 'staff'] },
+  { text: 'Dashboard', icon: <DashboardIcon />, path: '/', roles: ALL_STAFF_ROLES },
+  { text: 'Appointments', icon: <CalendarMonthIcon />, path: '/appointments', roles: ALL_STAFF_ROLES },
+  { text: 'Patients', icon: <PeopleIcon />, path: '/patients', roles: ALL_STAFF_ROLES },
+  { text: 'Doctors', icon: <PersonIcon />, path: '/doctors', roles: [ROLES.DOCTOR, ROLES.ASSISTANT] },
+  { text: 'Medicines', icon: <MedicalServicesIcon />, path: '/medicines', roles: ALL_STAFF_ROLES },
+  { text: 'Templates', icon: <DescriptionIcon />, path: '/templates', roles: [ROLES.DOCTOR] },
+  { text: 'Reports', icon: <AssessmentIcon />, path: '/reports', roles: [ROLES.DOCTOR, ROLES.ASSISTANT] },
+  { text: 'Agent', icon: <SmartToyIcon />, path: '/agent', roles: [ROLES.DOCTOR, ROLES.ASSISTANT] },
+  { text: 'Assistants', icon: <GroupAddIcon />, path: '/assistants', roles: [ROLES.DOCTOR] },
+  { text: 'Roles', icon: <AdminPanelSettingsIcon />, path: '/roles', roles: [ROLES.DOCTOR] },
+  { text: 'Settings', icon: <SettingsIcon />, path: '/settings', roles: ALL_STAFF_ROLES },
 ];
 
-// Resolve the role slug from the user object; fall back to the role name.
-const roleSlug = (user) => {
-  const slug = user?.role?.slug;
-  if (slug) return slug;
-  const name = (user?.role?.name || '').toLowerCase();
-  return name;
-};
+// Resolve the role slug from the user object via the shared helper so
+// the route guard, menu filter, and HomeRoute all agree.
+const roleSlug = resolveRoleSlug;
 
 const visibleMenuItems = (user) => {
   const slug = roleSlug(user);
@@ -98,7 +98,12 @@ const MainLayout = () => {
       const { data } = await api.get('/notifications?limit=5');
       setNotifications(data.data);
       setUnreadCount(data.unreadCount);
-    } catch (err) { /* ignore */ }
+    } catch (err) {
+      // SEC-5 fix: never log the full axios error object — it can include
+      // the bearer token, request URL with auth headers, and patient
+      // identifiers embedded in error messages. Swallow silently; the
+      // notification badge simply shows zero.
+    }
   };
 
   const handleLogout = () => {
@@ -123,36 +128,43 @@ const MainLayout = () => {
           </>
         )}
         {!isMobile && (
-          <IconButton onClick={() => dispatch(toggleSidebar())} sx={{ ml: 'auto' }} size="small">
+          <IconButton onClick={() => dispatch(toggleSidebar())} sx={{ ml: 'auto' }} size="small" aria-label={sidebarOpen ? 'Collapse navigation' : 'Expand navigation'}>
             {sidebarOpen ? <ChevronLeftIcon /> : <MenuIcon />}
           </IconButton>
         )}
       </Box>
       <Divider />
-      <List sx={{ flex: 1, px: 1, py: 1 }}>
-        {items.map((item) => (
-          <Tooltip key={item.text} title={!sidebarOpen ? item.text : ''} placement="right">
-            <ListItemButton
-              onClick={() => { navigate(item.path); if (isMobile) setMobileOpen(false); }}
-              selected={location.pathname === item.path}
-              sx={{
-                borderRadius: 2, mb: 0.5, minHeight: 44,
-                justifyContent: sidebarOpen ? 'initial' : 'center',
-                '&.Mui-selected': {
-                  bgcolor: 'action.hover',
-                  borderLeft: '4px solid',
-                  borderColor: 'secondary.main',
-                  pl: '12px', // compensate the 4px border so icon/text alignment holds
-                  '& .MuiListItemIcon-root': { color: 'primary.main' },
-                  '& .MuiListItemText-primary': { color: 'primary.main', fontWeight: 600 },
-                },
-              }}
-            >
-              <ListItemIcon sx={{ minWidth: sidebarOpen ? 40 : 0, justifyContent: 'center' }}>{item.icon}</ListItemIcon>
-              {sidebarOpen && <ListItemText primary={item.text} primaryTypographyProps={{ fontSize: 14 }} />}
-            </ListItemButton>
-          </Tooltip>
-        ))}
+      {/* A11Y-2 fix: <nav> + aria-label turn the menu list into a
+          landmark screen readers can jump to. aria-current="page" on
+          the active item tells assistive tech where the user is. */}
+      <List component="nav" aria-label="Main navigation" sx={{ flex: 1, px: 1, py: 1 }}>
+        {items.map((item) => {
+          const isActive = location.pathname === item.path;
+          return (
+            <Tooltip key={item.text} title={!sidebarOpen ? item.text : ''} placement="right">
+              <ListItemButton
+                onClick={() => { navigate(item.path); if (isMobile) setMobileOpen(false); }}
+                selected={isActive}
+                aria-current={isActive ? 'page' : undefined}
+                sx={{
+                  borderRadius: 2, mb: 0.5, minHeight: 44,
+                  justifyContent: sidebarOpen ? 'initial' : 'center',
+                  '&.Mui-selected': {
+                    bgcolor: 'action.hover',
+                    borderLeft: '4px solid',
+                    borderColor: 'secondary.main',
+                    pl: '12px', // compensate the 4px border so icon/text alignment holds
+                    '& .MuiListItemIcon-root': { color: 'primary.main' },
+                    '& .MuiListItemText-primary': { color: 'primary.main', fontWeight: 600 },
+                  },
+                }}
+              >
+                <ListItemIcon sx={{ minWidth: sidebarOpen ? 40 : 0, justifyContent: 'center' }}>{item.icon}</ListItemIcon>
+                {sidebarOpen && <ListItemText primary={item.text} primaryTypographyProps={{ fontSize: 14 }} />}
+              </ListItemButton>
+            </Tooltip>
+          );
+        })}
       </List>
       <Divider />
       <Box sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 1.5 }}>
@@ -169,6 +181,39 @@ const MainLayout = () => {
 
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh' }}>
+      {/* A11Y-2 fix: skip-to-content link. The link is the first focusable
+          element on the page and jumps focus past the navigation
+          straight to the page <main>. Visually hidden until it
+          receives focus (`:focus`) so it doesn't clutter the UI. */}
+      <Box
+        component="a"
+        href="#main-content"
+        sx={{
+          position: 'absolute',
+          left: -9999,
+          top: 'auto',
+          width: 1,
+          height: 1,
+          overflow: 'hidden',
+          '&:focus': {
+            position: 'fixed',
+            left: 16,
+            top: 16,
+            width: 'auto',
+            height: 'auto',
+            zIndex: 9999,
+            bgcolor: 'background.paper',
+            color: 'primary.main',
+            p: 1.5,
+            borderRadius: 1,
+            outline: 2,
+            outlineColor: 'primary.main',
+            outlineOffset: 2,
+          },
+        }}
+      >
+        Skip to main content
+      </Box>
       {isMobile ? (
         <Drawer variant="temporary" open={mobileOpen} onClose={() => setMobileOpen(false)} sx={{ '& .MuiDrawer-paper': { width: DRAWER_WIDTH } }}>
           {drawerContent}
@@ -183,18 +228,20 @@ const MainLayout = () => {
       )}
 
       <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        <AppBar position="sticky" elevation={0} sx={{ bgcolor: 'background.paper', borderBottom: 1, borderColor: 'divider' }}>
+        <AppBar component="header" position="sticky" elevation={0} sx={{ bgcolor: 'background.paper', borderBottom: 1, borderColor: 'divider' }}>
           <Toolbar>
-            {isMobile && <IconButton onClick={() => setMobileOpen(true)} sx={{ mr: 1 }}><MenuIcon /></IconButton>}
-            <Typography variant="h6" color="text.primary" fontWeight={600} sx={{ flex: 1 }}>
+            {isMobile && <IconButton onClick={() => setMobileOpen(true)} sx={{ mr: 1 }} aria-label="Open navigation"><MenuIcon /></IconButton>}
+            {/* A11Y-2 fix: the page-title H1 makes the current section a
+                proper heading landmark for screen-reader rotor nav. */}
+            <Typography component="h1" variant="h6" color="text.primary" fontWeight={600} sx={{ flex: 1 }}>
               {items.find(i => i.path === location.pathname)?.text || 'Vaidya Assist'}
             </Typography>
 
-            <IconButton onClick={() => dispatch(toggleDarkMode())} sx={{ mr: 1 }}>
+            <IconButton onClick={() => dispatch(toggleDarkMode())} sx={{ mr: 1 }} aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}>
               {darkMode ? <LightModeIcon /> : <DarkModeIcon />}
             </IconButton>
 
-            <IconButton onClick={(e) => setNotifAnchor(e.currentTarget)} sx={{ mr: 1 }}>
+            <IconButton onClick={(e) => setNotifAnchor(e.currentTarget)} sx={{ mr: 1 }} aria-label={`Notifications${unreadCount ? `, ${unreadCount} unread` : ''}`}>
               <Badge badgeContent={unreadCount} color="error"><NotificationsIcon /></Badge>
             </IconButton>
 
@@ -225,7 +272,7 @@ const MainLayout = () => {
               Assistant
             </Button>
 
-            <IconButton onClick={(e) => setUserAnchor(e.currentTarget)}>
+            <IconButton onClick={(e) => setUserAnchor(e.currentTarget)} aria-label="Account menu">
               <Avatar sx={{ width: 36, height: 36, bgcolor: 'primary.main', fontSize: 14 }}>{user?.name?.charAt(0)}</Avatar>
             </IconButton>
 
@@ -241,7 +288,9 @@ const MainLayout = () => {
           </Toolbar>
         </AppBar>
 
-        <Box component="main" sx={{ flex: 1, overflow: 'auto', p: 3 }}>
+        {/* A11Y-2 fix: target the skip-link's `#main-content` hash and
+            turn the main region into a labelled landmark. */}
+        <Box component="main" id="main-content" tabIndex={-1} aria-label="Main content" sx={{ flex: 1, overflow: 'auto', p: 3, outline: 'none' }}>
           <Outlet />
         </Box>
 

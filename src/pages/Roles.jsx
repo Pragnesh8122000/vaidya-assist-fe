@@ -23,6 +23,8 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import ShieldIcon from '@mui/icons-material/Shield';
 import { toast } from 'react-toastify';
 import api from '../api/axios';
+import ConfirmationDialog from '../components/ConfirmationDialog';
+import { EMPTY_ROLE_FORM } from '../types/forms';
 
 const Roles = () => {
   const [roles, setRoles] = useState([]);
@@ -30,7 +32,9 @@ const Roles = () => {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState(null);
-  const [form, setForm] = useState({ name: '', slug: '', description: '', permissions: [] });
+  const [form, setForm] = useState({ ...EMPTY_ROLE_FORM });
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     fetchRoles();
@@ -52,7 +56,7 @@ const Roles = () => {
         await api.post('/users/roles', form);
         toast.success('Role created');
       }
-      setDialogOpen(false); setEditing(null); setForm({ name: '', slug: '', description: '', permissions: [] });
+      setDialogOpen(false); setEditing(null); setForm({ ...EMPTY_ROLE_FORM });
       fetchRoles();
     } catch (err) { toast.error(err.response?.data?.message || 'Error'); }
   };
@@ -63,10 +67,15 @@ const Roles = () => {
     setDialogOpen(true);
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Delete this role?')) return;
-    try { await api.delete(`/users/roles/${id}`); toast.success('Role deleted'); fetchRoles(); }
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try { await api.delete(`/users/roles/${deleteTarget}`); toast.success('Role deleted'); fetchRoles(); }
     catch (err) { toast.error(err.response?.data?.message || 'Cannot delete'); }
+    finally {
+      setDeleting(false);
+      setDeleteTarget(null);
+    }
   };
 
   const togglePermission = (permId) => {
@@ -84,7 +93,7 @@ const Roles = () => {
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h4">Roles &amp; Permissions</Typography>
-        <Button variant="contained" startIcon={<AddIcon />} onClick={() => { setEditing(null); setForm({ name: '', slug: '', description: '', permissions: [] }); setDialogOpen(true); }}>Add Role</Button>
+        <Button variant="contained" startIcon={<AddIcon />} onClick={() => { setEditing(null); setForm({ ...EMPTY_ROLE_FORM }); setDialogOpen(true); }}>Add Role</Button>
       </Box>
       <Grid container spacing={3}>
         {roles.map(role => (
@@ -101,7 +110,7 @@ const Roles = () => {
                   </Box>
                   <Box>
                     <IconButton size="small" onClick={() => handleEdit(role)}><EditIcon fontSize="small" /></IconButton>
-                    <IconButton size="small" color="error" onClick={() => handleDelete(role._id)}><DeleteIcon fontSize="small" /></IconButton>
+                    <IconButton size="small" color="error" onClick={() => setDeleteTarget(role._id)}><DeleteIcon fontSize="small" /></IconButton>
                   </Box>
                 </Box>
                 <Divider sx={{ my: 1.5 }} />
@@ -143,6 +152,17 @@ const Roles = () => {
           <Button variant="contained" onClick={handleSubmit}>{editing ? 'Update' : 'Create'}</Button>
         </DialogActions>
       </Dialog>
+
+      <ConfirmationDialog
+        open={Boolean(deleteTarget)}
+        title="Delete role"
+        message="Users with this role will lose its permissions immediately. They will fall back to the role's default until reassigned."
+        confirmLabel="Delete"
+        destructive
+        loading={deleting}
+        onConfirm={handleDelete}
+        onCancel={() => !deleting && setDeleteTarget(null)}
+      />
     </Box>
   );
 };

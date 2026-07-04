@@ -26,6 +26,8 @@ import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import Tooltip from '@mui/material/Tooltip';
 import { toast } from 'react-toastify';
 import api from '../api/axios';
+import ConfirmationDialog from '../components/ConfirmationDialog';
+import { EMPTY_USER_FORM } from '../types/forms';
 
 const Assistants = () => {
   const [users, setUsers] = useState([]);
@@ -33,7 +35,9 @@ const Assistants = () => {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState(null);
-  const [form, setForm] = useState({ name: '', email: '', password: '', phone: '', role: '' });
+  const [form, setForm] = useState({ ...EMPTY_USER_FORM });
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
   const fetchUsers = useCallback(async () => {
     try { setLoading(true); const { data } = await api.get('/users?limit=50'); setUsers(data.data); }
@@ -52,7 +56,7 @@ const Assistants = () => {
         await api.post('/users', form);
         toast.success('User created');
       }
-      setDialogOpen(false); setEditing(null); setForm({ name: '', email: '', password: '', phone: '', role: '' });
+      setDialogOpen(false); setEditing(null); setForm({ ...EMPTY_USER_FORM });
       fetchUsers();
     } catch (err) { toast.error(err.response?.data?.message || 'Error'); }
   };
@@ -68,17 +72,22 @@ const Assistants = () => {
     catch (err) { toast.error('Failed to update'); }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Delete this user?')) return;
-    try { await api.delete(`/users/${id}`); toast.success('User deleted'); fetchUsers(); }
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try { await api.delete(`/users/${deleteTarget}`); toast.success('User deleted'); fetchUsers(); }
     catch (err) { toast.error('Failed to delete'); }
+    finally {
+      setDeleting(false);
+      setDeleteTarget(null);
+    }
   };
 
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h4">Assistants &amp; Staff</Typography>
-        <Button variant="contained" startIcon={<PersonAddIcon />} onClick={() => { setEditing(null); setForm({ name: '', email: '', password: '', phone: '', role: '' }); setDialogOpen(true); }}>Add User</Button>
+        <Button variant="contained" startIcon={<PersonAddIcon />} onClick={() => { setEditing(null); setForm({ ...EMPTY_USER_FORM }); setDialogOpen(true); }}>Add User</Button>
       </Box>
       <Card>
         <TableContainer>
@@ -114,7 +123,7 @@ const Assistants = () => {
                   <TableCell><Switch checked={u.isActive} onChange={() => handleToggleActive(u)} size="small" /></TableCell>
                   <TableCell align="right">
                     <IconButton size="small" onClick={() => handleEdit(u)}><EditIcon fontSize="small" /></IconButton>
-                    <IconButton size="small" color="error" onClick={() => handleDelete(u._id)}><DeleteIcon fontSize="small" /></IconButton>
+                    <IconButton size="small" color="error" onClick={() => setDeleteTarget(u._id)}><DeleteIcon fontSize="small" /></IconButton>
                   </TableCell>
                 </TableRow>
               ))}
@@ -143,6 +152,17 @@ const Assistants = () => {
           <Button variant="contained" onClick={handleSubmit}>{editing ? 'Update' : 'Create'}</Button>
         </DialogActions>
       </Dialog>
+
+      <ConfirmationDialog
+        open={Boolean(deleteTarget)}
+        title="Delete user"
+        message="This user will lose access to the clinic. Their past activity (appointments, notes) is retained for audit."
+        confirmLabel="Delete"
+        destructive
+        loading={deleting}
+        onConfirm={handleDelete}
+        onCancel={() => !deleting && setDeleteTarget(null)}
+      />
     </Box>
   );
 };

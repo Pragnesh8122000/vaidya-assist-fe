@@ -1,0 +1,14 @@
+{
+  "id": "session-1783197775190",
+  "startedAt": "2026-07-04T20:42:55.190Z",
+  "cwd": "/Users/pragnesh/Development/Projects/vaidya-assist/vaidya-assist-fe",
+  "context": {},
+  "metrics": {
+    "edits": 36,
+    "commands": 0,
+    "tasks": 0,
+    "errors": 0
+  },
+  "endedAt": "2026-07-04T20:48:57.453Z",
+  "duration": 362263
+}

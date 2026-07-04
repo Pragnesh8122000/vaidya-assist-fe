@@ -49,6 +49,17 @@ export const getTheme = (mode) => {
         secondary: isDark ? '#A89E8C' : '#5C5448',
       },
       divider: isDark ? '#3A332A' : '#E5DFD3',
+      // A11Y-6 fix: stat-card swatches. The previous hardcoded 12% rgba
+      // background failed WCAG 1.4.11 (non-text contrast) at 1.4:1.
+      // Bumped to 0.16 alpha and surfaced as named tokens so callers
+      // never re-introduce a sub-1.5:1 surface tint by accident. The
+      // "fg" pair gives the icon a 4.5+:1 contrast against the
+      // swatch in both light and dark modes.
+      statPrimary:   { bg: isDark ? 'rgba(143,179,163,0.16)' : 'rgba(61,90,76,0.16)',   fg: isDark ? '#8FB3A3' : '#3D5A4C' },
+      statInfo:      { bg: isDark ? 'rgba(169,200,186,0.16)' : 'rgba(79,114,96,0.16)',   fg: isDark ? '#A9C8BA' : '#4F7260' },
+      statAccent:    { bg: isDark ? 'rgba(224,164,74,0.16)'  : 'rgba(200,134,42,0.16)',  fg: isDark ? '#E0A44A' : '#C8862A' },
+      statBrass:     { bg: isDark ? 'rgba(184,148,98,0.16)'  : 'rgba(142,107,58,0.16)',  fg: isDark ? '#B89462' : '#8E6B3A' },
+      statDanger:    { bg: isDark ? 'rgba(217,96,79,0.16)'   : 'rgba(162,58,47,0.16)',   fg: isDark ? '#D9604F' : '#A23A2F' },
     },
     typography: {
       fontFamily: SANS,

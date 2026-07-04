@@ -33,6 +33,8 @@ import dayjs from 'dayjs';
 import { toast } from 'react-toastify';
 import api from '../api/axios';
 import { getSocket } from '../socket/socket';
+import ConfirmationDialog from '../components/ConfirmationDialog';
+import { EMPTY_APPOINTMENT_FORM } from '../types/forms';
 
 // §3.2 (OQ#3=Option B): 'Confirmed' added to match the backend enum. A
 // confirmed appointment is one staff has accepted from the Waiting queue —
@@ -50,8 +52,10 @@ const Appointments = () => {
   const [editing, setEditing] = useState(null);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-  const [form, setForm] = useState({ patient: '', date: '', time: '', status: 'Waiting', reason: '', notes: '' });
+  const [form, setForm] = useState({ ...EMPTY_APPOINTMENT_FORM });
   const [submitting, setSubmitting] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
   const fetchAppointments = useCallback(async () => {
     try {
@@ -114,7 +118,7 @@ const Appointments = () => {
       }
       setDialogOpen(false);
       setEditing(null);
-      setForm({ patient: '', date: '', time: '', status: 'Waiting', reason: '', notes: '' });
+      setForm({ ...EMPTY_APPOINTMENT_FORM });
       fetchAppointments();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Error');
@@ -139,13 +143,19 @@ const Appointments = () => {
     setDialogOpen(true);
   };
 
-  const handleDelete = async (apt) => {
-    if (!window.confirm('Delete this appointment?')) return;
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    const id = deleteTarget.displayId || deleteTarget._id;
+    setDeleting(true);
     try {
-      await api.delete(`/appointments/${apt.displayId || apt._id}`);
+      await api.delete(`/appointments/${id}`);
       toast.success('Appointment deleted');
       fetchAppointments();
     } catch (err) { toast.error('Failed to delete'); }
+    finally {
+      setDeleting(false);
+      setDeleteTarget(null);
+    }
   };
 
   const handleStatusChange = async (apt, status) => {
@@ -160,7 +170,7 @@ const Appointments = () => {
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 2 }}>
         <Typography variant="h4">Appointments</Typography>
-        <Button variant="contained" startIcon={<AddIcon />} onClick={() => { setEditing(null); setForm({ patient: '', date: '', time: '', status: 'Waiting', reason: '', notes: '' }); setDialogOpen(true); }}>
+        <Button variant="contained" startIcon={<AddIcon />} onClick={() => { setEditing(null); setForm({ ...EMPTY_APPOINTMENT_FORM }); setDialogOpen(true); }}>
           New Appointment
         </Button>
       </Box>
@@ -225,7 +235,7 @@ const Appointments = () => {
                     </TableCell>
                     <TableCell align="right">
                       <IconButton size="small" onClick={() => handleEdit(apt)}><EditIcon fontSize="small" /></IconButton>
-                      <IconButton size="small" color="error" onClick={() => handleDelete(apt)}><DeleteIcon fontSize="small" /></IconButton>
+                      <IconButton size="small" color="error" onClick={() => setDeleteTarget(apt)}><DeleteIcon fontSize="small" /></IconButton>
                     </TableCell>
                   </TableRow>
                 ))
@@ -295,6 +305,17 @@ const Appointments = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <ConfirmationDialog
+        open={Boolean(deleteTarget)}
+        title="Delete appointment"
+        message="The appointment and any associated notes will be removed from the schedule."
+        confirmLabel="Delete"
+        destructive
+        loading={deleting}
+        onConfirm={handleDelete}
+        onCancel={() => !deleting && setDeleteTarget(null)}
+      />
     </Box>
   );
 };

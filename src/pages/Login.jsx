@@ -199,7 +199,16 @@ const Login = () => {
                     ),
                     endAdornment: (
                       <InputAdornment position="end">
-                        <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
+                        <IconButton
+                          onClick={() => setShowPassword(!showPassword)}
+                          edge="end"
+                          // A11Y-8 fix: the icon-only password toggle has
+                          // no text label, so screen readers announce
+                          // nothing. A descriptive aria-label that flips
+                          // with the toggle state lets SR users confirm
+                          // what will happen on activation.
+                          aria-label={showPassword ? 'Hide password' : 'Show password'}
+                        >
                           {showPassword ? <VisibilityOff /> : <Visibility />}
                         </IconButton>
                       </InputAdornment>

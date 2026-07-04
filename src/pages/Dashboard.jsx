@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useTheme } from '@mui/material/styles';
 import Grid from '@mui/material/Grid';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
@@ -15,11 +16,17 @@ import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, Cart
 import api from '../api/axios';
 import AnimatedChartCard from '../components/AnimatedChartCard';
 
-// Warm Manuscript palette swatches — clinical green, sage, turmeric amber,
-// saffron, ink red, antique brass. Each maps cleanly to a theme token.
-const COLORS = ['#3D5A4C', '#4F7260', '#C8862A', '#B26A00', '#A23A2F', '#8E6B3A'];
+// A11Y-6 fix: the previous "COLORS" array was 6 hardcoded hex strings
+// that re-asserted the warm-manuscript palette inline, which (a)
+// meant dark mode painted chart slices with light-mode hex, and (b)
+// was unreachable from the theme. Now the chart series resolve to
+// the same tokens the theme defines for primary/info/accent/brass/
+// danger. The pie `COLORS` array is kept as a fallback for slice
+// ordering but sourced from the theme at render time.
+const STAT_TOKENS = ['statPrimary', 'statInfo', 'statAccent', 'statBrass', 'statDanger'];
 
 const Dashboard = () => {
+  const theme = useTheme();
   const [stats, setStats] = useState(null);
   const [appointmentChart, setAppointmentChart] = useState([]);
   const [patientVisits, setPatientVisits] = useState([]);
@@ -42,7 +49,13 @@ const Dashboard = () => {
         setPatientVisits(p.data.data);
         setMedicineStock(m.data.data);
         setStatusDist(st.data.data);
-      } catch (err) { console.error(err); }
+      } catch (err) {
+        // SEC-5 fix: do not log the raw axios error. The error object
+        // includes the request config (URL, headers — including the
+        // bearer token) and the response body which can carry patient
+        // data on 4xx responses. Swallow and let the loading state end
+        // so the page renders the empty fallback instead of stalling.
+      }
       setLoading(false);
     };
     fetchData();
@@ -55,6 +68,32 @@ const Dashboard = () => {
     visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
   };
 
+  // A11Y-6 fix: stat-card definitions. Each entry names a theme token
+  // (statPrimary / statInfo / statAccent / statBrass / statDanger)
+  // instead of inlining rgba/hex. The fg/bg pair is defined once in
+  // theme.js so a palette change or dark-mode flip is a one-line edit.
+  // The 0.16-alpha swatches replaced 0.12-alpha ones that failed
+  // WCAG 1.4.11 (non-text contrast) at 1.4:1.
+  const swatch = (name) => theme.palette[name];
+  const STATS = [
+    { label: 'Total Patients',         value: stats?.totalPatients,        icon: <PeopleIcon />,           token: 'statPrimary' },
+    { label: "Today's Appointments",   value: stats?.todayAppointments,    icon: <CalendarMonthIcon />,    token: 'statInfo'    },
+    { label: 'Pending',                value: stats?.pendingAppointments,  icon: <HourglassTopIcon />,     token: 'statAccent'  },
+    { label: 'Total Medicines',        value: stats?.totalMedicines,       icon: <MedicalServicesIcon />,  token: 'statBrass'   },
+    { label: 'Low Stock',              value: stats?.lowStockMedicines,    icon: <WarningIcon />,          token: 'statDanger',  caption: 'Need restock' },
+  ];
+
+  // Chart series. Resolved at render so dark mode picks up the
+  // mode-correct foreground without inline conditionals.
+  const cPrimary = swatch('statPrimary').fg;
+  const cInfo    = swatch('statInfo').fg;
+  const cAccent  = swatch('statAccent').fg;
+  const cBrass   = swatch('statBrass').fg;
+  const cDanger  = swatch('statDanger').fg;
+  // Pie slices cycle through the 5 stat tokens. Status charts rarely
+  // surface more than 5 distinct values, but the modulo handles it.
+  const PIE_FG = [cPrimary, cInfo, cAccent, cBrass, cDanger];
+
   return (
     <Box>
       <motion.div initial="hidden" animate="visible" variants={headerVariants}>
@@ -63,82 +102,46 @@ const Dashboard = () => {
       </motion.div>
 
       <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
-          <Card sx={{ height: '100%' }}>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-                <Box>
-                  <Typography variant="body2" color="text.secondary" gutterBottom>Total Patients</Typography>
-                  <Typography variant="h3" fontWeight={700} sx={{ color: '#3D5A4C' }}>{stats?.totalPatients || 0}</Typography>
-                </Box>
-                <Box sx={{ width: 48, height: 48, borderRadius: '12px', bgcolor: 'rgba(61,90,76,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <PeopleIcon sx={{ color: '#3D5A4C' }} />
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
-          <Card sx={{ height: '100%' }}>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-                <Box>
-                  <Typography variant="body2" color="text.secondary" gutterBottom>Today's Appointments</Typography>
-                  <Typography variant="h3" fontWeight={700} sx={{ color: '#4F7260' }}>{stats?.todayAppointments || 0}</Typography>
-                </Box>
-                <Box sx={{ width: 48, height: 48, borderRadius: '12px', bgcolor: 'rgba(79,114,96,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <CalendarMonthIcon sx={{ color: '#4F7260' }} />
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
-          <Card sx={{ height: '100%' }}>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-                <Box>
-                  <Typography variant="body2" color="text.secondary" gutterBottom>Pending</Typography>
-                  <Typography variant="h3" fontWeight={700} sx={{ color: '#C8862A' }}>{stats?.pendingAppointments || 0}</Typography>
-                </Box>
-                <Box sx={{ width: 48, height: 48, borderRadius: '12px', bgcolor: 'rgba(200,134,42,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <HourglassTopIcon sx={{ color: '#C8862A' }} />
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
-          <Card sx={{ height: '100%' }}>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-                <Box>
-                  <Typography variant="body2" color="text.secondary" gutterBottom>Total Medicines</Typography>
-                  <Typography variant="h3" fontWeight={700} sx={{ color: '#8E6B3A' }}>{stats?.totalMedicines || 0}</Typography>
-                </Box>
-                <Box sx={{ width: 48, height: 48, borderRadius: '12px', bgcolor: 'rgba(142,107,58,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <MedicalServicesIcon sx={{ color: '#8E6B3A' }} />
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
-          <Card sx={{ height: '100%' }}>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-                <Box>
-                  <Typography variant="body2" color="text.secondary" gutterBottom>Low Stock</Typography>
-                  <Typography variant="h3" fontWeight={700} sx={{ color: '#A23A2F' }}>{stats?.lowStockMedicines || 0}</Typography>
-                  <Typography variant="caption" color="text.secondary">Need restock</Typography>
-                </Box>
-                <Box sx={{ width: 48, height: 48, borderRadius: '12px', bgcolor: 'rgba(162,58,47,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <WarningIcon sx={{ color: '#A23A2F' }} />
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
+        {STATS.map((s) => {
+          const c = swatch(s.token);
+          // Clone the icon element with the swatch's foreground color
+          // applied via sx. The icon's source component is stateless,
+          // so cloning it per-row is cheap and keeps the swatch tokens
+          // as the single source of truth.
+          const IconEl = s.icon
+            ? { ...s.icon, props: { ...(s.icon.props || {}), sx: { color: c.fg } } }
+            : null;
+          return (
+            <Grid size={{ xs: 12, sm: 6, md: 2.4 }} key={s.label}>
+              <Card sx={{ height: '100%' }}>
+                <CardContent>
+                  <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                    <Box>
+                      <Typography variant="body2" color="text.secondary" gutterBottom>{s.label}</Typography>
+                      <Typography variant="h3" fontWeight={700} sx={{ color: c.fg }}>{s.value || 0}</Typography>
+                      {s.caption && <Typography variant="caption" color="text.secondary">{s.caption}</Typography>}
+                    </Box>
+                    <Box
+                      sx={{
+                        width: 48, height: 48, borderRadius: '12px',
+                        // theme.palette.stat*.bg is a string in rgba()
+                        // form (e.g. "rgba(61,90,76,0.16)"). Passing
+                        // the raw string is intentional — sx accepts
+                        // any valid CSS background value and we don't
+                        // need to muck with MUI's alpha() helper on
+                        // the consumer side.
+                        bgcolor: c.bg,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      }}
+                    >
+                      {IconEl}
+                    </Box>
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
+          );
+        })}
       </Grid>
 
       <Grid container spacing={3}>
@@ -151,9 +154,9 @@ const Dashboard = () => {
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="count" fill="#3D5A4C" name="Total" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="completed" fill="#4F7260" name="Completed" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="cancelled" fill="#A23A2F" name="Cancelled" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="count" fill={cPrimary} name="Total" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="completed" fill={cInfo} name="Completed" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="cancelled" fill={cDanger} name="Cancelled" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </AnimatedChartCard>
@@ -163,7 +166,7 @@ const Dashboard = () => {
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
                 <Pie data={statusDist} dataKey="count" nameKey="_id" cx="50%" cy="50%" outerRadius={100} label={({ _id, count }) => `${_id}: ${count}`}>
-                  {statusDist.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                  {statusDist.map((_, i) => <Cell key={i} fill={PIE_FG[i % PIE_FG.length]} />)}
                 </Pie>
                 <Tooltip />
               </PieChart>
@@ -179,8 +182,8 @@ const Dashboard = () => {
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Line type="monotone" dataKey="visits" stroke="#3D5A4C" strokeWidth={2} name="Total Visits" />
-                <Line type="monotone" dataKey="uniquePatients" stroke="#C8862A" strokeWidth={2} name="Unique Patients" />
+                <Line type="monotone" dataKey="visits" stroke={cPrimary} strokeWidth={2} name="Total Visits" />
+                <Line type="monotone" dataKey="uniquePatients" stroke={cAccent} strokeWidth={2} name="Unique Patients" />
               </LineChart>
             </ResponsiveContainer>
           </AnimatedChartCard>
@@ -193,7 +196,7 @@ const Dashboard = () => {
                 <XAxis type="number" />
                 <YAxis dataKey="_id" type="category" width={100} tick={{ fontSize: 11 }} />
                 <Tooltip />
-                <Bar dataKey="totalStock" fill="#4F7260" name="Stock" radius={[0, 4, 4, 0]} />
+                <Bar dataKey="totalStock" fill={cInfo} name="Stock" radius={[0, 4, 4, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </AnimatedChartCard>

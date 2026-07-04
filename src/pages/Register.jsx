@@ -195,7 +195,16 @@ const Register = () => {
                   ),
                   endAdornment: (
                     <InputAdornment position="end">
-                      <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
+                      <IconButton
+                        onClick={() => setShowPassword(!showPassword)}
+                        edge="end"
+                        // A11Y-8 fix: icon-only password toggle has no
+                        // accessible name without an aria-label; screen
+                        // readers skip it entirely. Flipping the label
+                        // with the toggle state gives SR users a clear
+                        // "what will happen on click" affordance.
+                        aria-label={showPassword ? 'Hide password' : 'Show password'}
+                      >
                         {showPassword ? <VisibilityOff /> : <Visibility />}
                       </IconButton>
                     </InputAdornment>

@@ -2,12 +2,38 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { sendAgentMessage } from '../api/agent';
 
 /**
+ * @typedef {Object} ChatMessage
+ * @property {'user'|'assistant'} role
+ * @property {string} content
+ * @property {string} [toolCalled]
+ * @property {string} [toolName]
+ * @property {boolean} [isEmergency]
+ */
+
+/**
+ * @typedef {Object} ConversationState
+ * @property {string} intent
+ * @property {Object<string, *>} slots
+ * @property {string[]} [missingSlots]
+ */
+
+/**
+ * @typedef {Object} AgentChatState
+ * @property {ChatMessage[]} messages
+ * @property {boolean} loading
+ * @property {string|null} error
+ * @property {boolean} isOpen
+ * @property {ConversationState|null} conversationState
+ */
+
+/**
  * Send a message to the staff agent, including conversation state for
  * multi-turn slot-filling (mirrors the patient-portal slice shape so the
  * widget UI is identical across portals).
  */
 export const sendAgentChatMessage = createAsyncThunk(
   'agentChat/sendMessage',
+  /** @param {{message: string}} payload */
   async ({ message }, { getState, rejectWithValue }) => {
     try {
       const state = getState();
@@ -28,15 +54,18 @@ export const sendAgentChatMessage = createAsyncThunk(
   },
 );
 
+/** @type {AgentChatState} */
+const initialState = {
+  messages: [],
+  loading: false,
+  error: null,
+  isOpen: false,
+  conversationState: null, // { intent, slots, missingSlots } when present
+};
+
 const agentChatSlice = createSlice({
   name: 'agentChat',
-  initialState: {
-    messages: [],
-    loading: false,
-    error: null,
-    isOpen: false,
-    conversationState: null, // { intent, slots, missingSlots } when present
-  },
+  initialState,
   reducers: {
     toggleChat: (state) => {
       state.isOpen = !state.isOpen;
