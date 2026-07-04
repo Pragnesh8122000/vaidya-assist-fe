@@ -106,7 +106,7 @@ const Appointments = () => {
     setSubmitting(true);
     try {
       if (editing) {
-        await api.put(`/appointments/${editing._id}`, form);
+        await api.put(`/appointments/${editing.displayId || editing._id}`, form);
         toast.success('Appointment updated');
       } else {
         await api.post('/appointments', form);
@@ -139,18 +139,18 @@ const Appointments = () => {
     setDialogOpen(true);
   };
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (apt) => {
     if (!window.confirm('Delete this appointment?')) return;
     try {
-      await api.delete(`/appointments/${id}`);
+      await api.delete(`/appointments/${apt.displayId || apt._id}`);
       toast.success('Appointment deleted');
       fetchAppointments();
     } catch (err) { toast.error('Failed to delete'); }
   };
 
-  const handleStatusChange = async (id, status) => {
+  const handleStatusChange = async (apt, status) => {
     try {
-      await api.put(`/appointments/${id}`, { status });
+      await api.put(`/appointments/${apt.displayId || apt._id}`, { status });
       toast.success(`Status changed to ${status}`);
       fetchAppointments();
     } catch (err) { toast.error('Failed to update status'); }
@@ -220,12 +220,12 @@ const Appointments = () => {
                     <TableCell>
                       <Chip label={apt.status} color={statusColors[apt.status]} size="small" onClick={() => {
                         const idx = statuses.indexOf(apt.status);
-                        if (idx < statuses.length - 2) handleStatusChange(apt._id, statuses[idx + 1]);
+                        if (idx < statuses.length - 2) handleStatusChange(apt, statuses[idx + 1]);
                       }} sx={{ cursor: 'pointer' }} />
                     </TableCell>
                     <TableCell align="right">
                       <IconButton size="small" onClick={() => handleEdit(apt)}><EditIcon fontSize="small" /></IconButton>
-                      <IconButton size="small" color="error" onClick={() => handleDelete(apt._id)}><DeleteIcon fontSize="small" /></IconButton>
+                      <IconButton size="small" color="error" onClick={() => handleDelete(apt)}><DeleteIcon fontSize="small" /></IconButton>
                     </TableCell>
                   </TableRow>
                 ))

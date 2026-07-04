@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import Box from '@mui/material/Box';
-import Fab from '@mui/material/Fab';
 import Drawer from '@mui/material/Drawer';
 import TextField from '@mui/material/TextField';
 import IconButton from '@mui/material/IconButton';
@@ -52,28 +51,7 @@ const AgentChatWidget = () => {
 
   return (
     <>
-      {/* Persistent floating entry point */}
-      <Fab
-        color="primary"
-        aria-label="Open clinic assistant"
-        aria-haspopup="dialog"
-        onClick={() => dispatch(toggleChat())}
-        sx={{
-          position: 'fixed',
-          right: 24,
-          bottom: 24,
-          zIndex: 1300,
-          '&.Mui-focusVisible': {
-            outline: '3px solid #C8862A',
-            outlineOffset: '3px',
-            boxShadow: 6,
-          },
-        }}
-      >
-        <MedicalServicesIcon />
-      </Fab>
-
-      {/* Right-side slide-in panel */}
+      {/* Right-side slide-in panel — opened by the Assistant button in the AppBar */}
       <Drawer
         anchor="right"
         open={isOpen}

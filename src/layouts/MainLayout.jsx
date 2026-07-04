@@ -11,6 +11,7 @@ import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
 import Avatar from '@mui/material/Avatar';
 import Badge from '@mui/material/Badge';
+import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
 import Tooltip from '@mui/material/Tooltip';
 import AppBar from '@mui/material/AppBar';
@@ -38,6 +39,7 @@ import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import DescriptionIcon from '@mui/icons-material/Description';
 import { logout } from '../features/authSlice';
 import { toggleSidebar, toggleDarkMode } from '../features/uiSlice';
+import { openChat as openAgentChat } from '../features/agentChatSlice';
 import api from '../api/axios';
 import AgentChatWidget from '../components/AgentChatWidget';
 
@@ -196,10 +198,6 @@ const MainLayout = () => {
               <Badge badgeContent={unreadCount} color="error"><NotificationsIcon /></Badge>
             </IconButton>
 
-            <IconButton onClick={(e) => setUserAnchor(e.currentTarget)}>
-              <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.main', fontSize: 14 }}>{user?.name?.charAt(0)}</Avatar>
-            </IconButton>
-
             <Menu anchorEl={notifAnchor} open={Boolean(notifAnchor)} onClose={() => setNotifAnchor(null)} slotProps={{ paper: { sx: { width: 320, maxHeight: 400 } } }}>
               <Box sx={{ px: 2, py: 1 }}><Typography variant="subtitle1" fontWeight={600}>Notifications</Typography></Box>
               <Divider />
@@ -216,6 +214,20 @@ const MainLayout = () => {
                 ))
               )}
             </Menu>
+
+            <Button
+              variant="contained"
+              size="small"
+              startIcon={<MedicalServicesIcon />}
+              onClick={() => dispatch(openAgentChat())}
+              sx={{ mr: 1, textTransform: 'none', fontWeight: 600, borderRadius: 2, px: 1.5 }}
+            >
+              Assistant
+            </Button>
+
+            <IconButton onClick={(e) => setUserAnchor(e.currentTarget)}>
+              <Avatar sx={{ width: 36, height: 36, bgcolor: 'primary.main', fontSize: 14 }}>{user?.name?.charAt(0)}</Avatar>
+            </IconButton>
 
             <Menu anchorEl={userAnchor} open={Boolean(userAnchor)} onClose={() => setUserAnchor(null)}>
               <Box sx={{ px: 2, py: 1 }}>

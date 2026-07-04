@@ -17,7 +17,6 @@ import LockIcon from '@mui/icons-material/Lock';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
-import { toast } from 'react-toastify';
 import { login, clearError } from '../features/authSlice';
 
 const Login = () => {
@@ -31,14 +30,12 @@ const Login = () => {
     e.preventDefault();
     dispatch(clearError());
     if (!form.email || !form.password) {
-      toast.error('Please enter email and password');
       return;
     }
     try {
       await dispatch(login(form)).unwrap();
-      toast.success('Welcome back!');
     } catch (err) {
-      toast.error(err || 'Login failed');
+      // Error toast is shown by the slice
     }
   };
 
