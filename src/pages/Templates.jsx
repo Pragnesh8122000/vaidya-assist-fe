@@ -4,11 +4,6 @@ import Button from '@mui/material/Button';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import CircularProgress from '@mui/material/CircularProgress';
-import Dialog from '@mui/material/Dialog';
-import DialogContent from '@mui/material/DialogContent';
-import DialogContentText from '@mui/material/DialogContentText';
-import DialogActions from '@mui/material/DialogActions';
-import DialogTitle from '@mui/material/DialogTitle';
 import IconButton from '@mui/material/IconButton';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
@@ -24,6 +19,8 @@ import EditIcon from '@mui/icons-material/Edit';
 import { toast } from 'react-toastify';
 import api from '../api/axios';
 import TemplateDialog from '../components/TemplateDialog';
+import ConfirmationDialog from '../components/ConfirmationDialog';
+import { formatDate } from '../utils/dateFormat';
 
 const Templates = () => {
   const [templates, setTemplates] = useState([]);
@@ -31,6 +28,7 @@ const Templates = () => {
   const [editing, setEditing] = useState(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
   const loadTemplates = useCallback(async () => {
     setLoading(true);
@@ -79,6 +77,7 @@ const Templates = () => {
 
   const handleDelete = async () => {
     if (!confirmDelete?._id) return;
+    setDeleting(true);
     try {
       await api.delete(`/prescription-templates/${confirmDelete._id}`);
       toast.success('Template deleted');
@@ -86,6 +85,8 @@ const Templates = () => {
       await loadTemplates();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to delete template');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -148,22 +149,21 @@ const Templates = () => {
                       <TableCell align="center">{t.medications?.length || 0}</TableCell>
                       <TableCell>{t.createdBy?.name || '—'}</TableCell>
                       <TableCell>
-                        {t.createdAt ? new Date(t.createdAt).toLocaleDateString() : '—'}
+                        {t.createdAt ? formatDate(t.createdAt) : '—'}
                       </TableCell>
                       <TableCell align="right">
                         <Tooltip title="Edit">
-                          <IconButton size="small" onClick={() => handleOpenEdit(t)} aria-label="Edit template">
-                            <EditIcon fontSize="small" />
+                          <IconButton onClick={() => handleOpenEdit(t)} aria-label="Edit template">
+                            <EditIcon />
                           </IconButton>
                         </Tooltip>
                         <Tooltip title="Delete">
                           <IconButton
-                            size="small"
                             color="error"
                             onClick={() => setConfirmDelete(t)}
                             aria-label="Delete template"
                           >
-                            <DeleteIcon fontSize="small" />
+                            <DeleteIcon />
                           </IconButton>
                         </Tooltip>
                       </TableCell>
@@ -186,22 +186,16 @@ const Templates = () => {
         onSaved={handleSave}
       />
 
-      <Dialog open={Boolean(confirmDelete)} onClose={() => setConfirmDelete(null)}>
-        <DialogTitle>Delete template?</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            {confirmDelete
-              ? `"${confirmDelete.name}" will be permanently removed. This can't be undone.`
-              : ''}
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setConfirmDelete(null)}>Cancel</Button>
-          <Button color="error" variant="contained" onClick={handleDelete}>
-            Delete
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <ConfirmationDialog
+        open={Boolean(confirmDelete)}
+        title="Delete template?"
+        message={confirmDelete ? `"${confirmDelete.name}" will be permanently removed. This can't be undone.` : ''}
+        confirmLabel="Delete"
+        destructive
+        loading={deleting}
+        onConfirm={handleDelete}
+        onCancel={() => !deleting && setConfirmDelete(null)}
+      />
     </Box>
   );
 };

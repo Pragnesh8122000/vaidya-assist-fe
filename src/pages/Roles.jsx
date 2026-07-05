@@ -70,7 +70,7 @@ const Roles = () => {
   const handleDelete = async () => {
     if (!deleteTarget) return;
     setDeleting(true);
-    try { await api.delete(`/users/roles/${deleteTarget}`); toast.success('Role deleted'); fetchRoles(); }
+    try { await api.delete(`/users/roles/${deleteTarget._id}`); toast.success('Role deleted'); fetchRoles(); }
     catch (err) { toast.error(err.response?.data?.message || 'Cannot delete'); }
     finally {
       setDeleting(false);
@@ -110,7 +110,7 @@ const Roles = () => {
                   </Box>
                   <Box>
                     <IconButton size="small" onClick={() => handleEdit(role)}><EditIcon fontSize="small" /></IconButton>
-                    <IconButton size="small" color="error" onClick={() => setDeleteTarget(role._id)}><DeleteIcon fontSize="small" /></IconButton>
+                    <IconButton size="small" color="error" onClick={() => setDeleteTarget(role)}><DeleteIcon fontSize="small" /></IconButton>
                   </Box>
                 </Box>
                 <Divider sx={{ my: 1.5 }} />
@@ -156,7 +156,7 @@ const Roles = () => {
       <ConfirmationDialog
         open={Boolean(deleteTarget)}
         title="Delete role"
-        message="Users with this role will lose its permissions immediately. They will fall back to the role's default until reassigned."
+        message={deleteTarget ? `Delete role "${deleteTarget.name}"? This will remove it from all assigned users and cannot be undone.` : ''}
         confirmLabel="Delete"
         destructive
         loading={deleting}

@@ -30,6 +30,7 @@ import { toast } from 'react-toastify';
 import api from '../api/axios';
 import ConfirmationDialog from '../components/ConfirmationDialog';
 import { EMPTY_MEDICINE_FORM } from '../types/forms';
+import { formatDate, toUTCDateInput } from '../utils/dateFormat';
 
 const Medicines = () => {
   const [medicines, setMedicines] = useState([]);
@@ -95,10 +96,7 @@ const Medicines = () => {
     setEditing(m);
     // Build expiry date from UTC components so the input shows the original
     // calendar day regardless of the user's local timezone.
-    const d = m.expiryDate ? new Date(m.expiryDate) : null;
-    const expiryStr = d
-      ? `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`
-      : '';
+    const expiryStr = toUTCDateInput(m.expiryDate);
     setForm({
       name: m.name,
       genericName: m.genericName || '',
@@ -148,8 +146,8 @@ const Medicines = () => {
             icon={<WarningIcon />} onClick={() => { setLowStockFilter(!lowStockFilter); setPage(0); }} sx={{ cursor: 'pointer' }} />
         </Box>
 
-        <TableContainer>
-          <Table>
+        <TableContainer sx={{ overflowX: 'auto' }}>
+          <Table sx={{ minWidth: 820 }}>
             <TableHead>
               <TableRow>
                 <TableCell>Medicine</TableCell>
@@ -181,7 +179,7 @@ const Medicines = () => {
                     <TableCell>{m.batchNumber}</TableCell>
                     <TableCell>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                        {m.expiryDate ? new Date(m.expiryDate).toLocaleDateString() : 'N/A'}
+                        {m.expiryDate ? formatDate(m.expiryDate) : 'N/A'}
                         {isExpired(m) && <Chip label="Expired" size="small" color="error" sx={{ ml: 0.5 }} />}
                         {isExpiringSoon(m) && <Chip label="Soon" size="small" color="warning" sx={{ ml: 0.5 }} />}
                       </Box>
@@ -189,8 +187,8 @@ const Medicines = () => {
                     <TableCell>{m.supplier}</TableCell>
                     <TableCell>₹{m.price}</TableCell>
                     <TableCell align="right">
-                      <IconButton size="small" onClick={() => handleEdit(m)}><EditIcon fontSize="small" /></IconButton>
-                      <IconButton size="small" color="error" onClick={() => setDeleteTarget(m._id)}><DeleteIcon fontSize="small" /></IconButton>
+                      <IconButton onClick={() => handleEdit(m)} aria-label="Edit medicine"><EditIcon /></IconButton>
+                      <IconButton color="error" onClick={() => setDeleteTarget(m._id)} aria-label="Delete medicine"><DeleteIcon /></IconButton>
                     </TableCell>
                   </TableRow>
                 ))

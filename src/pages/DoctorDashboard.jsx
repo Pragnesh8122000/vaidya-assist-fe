@@ -25,28 +25,27 @@ import api from '../api/axios';
 import { getSocket } from '../socket/socket';
 import PatientHistoryDrawer from '../components/PatientHistoryDrawer';
 import PrescriptionDialog from '../components/PrescriptionDialog';
+import { formatLongDate, todayLocalISO, isUTCDateToday } from '../utils/dateFormat';
 
+// §3.2 (OQ#3=Option B): 'Confirmed' added to match the R3 backend enum
+// (Appointment.js) and Appointments.jsx. A Confirmed appointment is one staff
+// has accepted from the Waiting queue — render it as 'info' (blue), distinct
+// from the yellow Waiting badge, so patient-booked Confirmed appointments show
+// up in the doctor's queue.
 const statusColors = {
   Waiting: 'warning',
+  Confirmed: 'info',
   'In Consultation': 'info',
   Completed: 'success',
   Cancelled: 'error',
 };
-const statuses = ['Waiting', 'In Consultation', 'Completed', 'Cancelled'];
-const queueColumns = ['Waiting', 'In Consultation', 'Completed'];
+const statuses = ['Waiting', 'Confirmed', 'In Consultation', 'Completed', 'Cancelled'];
+const queueColumns = ['Waiting', 'Confirmed', 'In Consultation', 'Completed'];
 
-const todayStr = () => {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-};
+const todayStr = todayLocalISO;
 
 // Compare an appointment date (stored as UTC midnight) to today in YYYY-MM-DD form.
-const aptDateMatchesToday = (apt) => {
-  if (!apt.date) return false;
-  const d = new Date(apt.date);
-  const y = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
-  return y === todayStr();
-};
+const aptDateMatchesToday = (apt) => isUTCDateToday(apt.date);
 
 const DoctorDashboard = () => {
   const navigate = useNavigate();
@@ -132,6 +131,7 @@ const DoctorDashboard = () => {
   const todaysList = appointments;
   const counts = {
     Waiting: appointments.filter((a) => a.status === 'Waiting').length,
+    Confirmed: appointments.filter((a) => a.status === 'Confirmed').length,
     'In Consultation': appointments.filter((a) => a.status === 'In Consultation').length,
     Completed: appointments.filter((a) => a.status === 'Completed').length,
   };
@@ -142,7 +142,7 @@ const DoctorDashboard = () => {
         <Box>
           <Typography variant="h4">Doctor Dashboard</Typography>
           <Typography variant="body2" color="text.secondary">
-            {new Date().toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+            {formatLongDate(new Date())}
           </Typography>
         </Box>
         <Stack direction="row" spacing={1} flexWrap="wrap">
@@ -157,7 +157,7 @@ const DoctorDashboard = () => {
 
       <Grid container spacing={2} sx={{ mb: 3 }}>
         {queueColumns.map((col) => (
-          <Grid size={{ xs: 12, sm: 4 }} key={col}>
+          <Grid size={{ xs: 12, sm: 3 }} key={col}>
             <Card>
               <CardContent sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <Box>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useTheme } from '@mui/material/styles';
 import Grid from '@mui/material/Grid';
@@ -7,11 +7,15 @@ import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import CircularProgress from '@mui/material/CircularProgress';
+import Alert from '@mui/material/Alert';
+import Button from '@mui/material/Button';
+import Skeleton from '@mui/material/Skeleton';
 import PeopleIcon from '@mui/icons-material/People';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import HourglassTopIcon from '@mui/icons-material/HourglassTop';
 import MedicalServicesIcon from '@mui/icons-material/MedicalServices';
 import WarningIcon from '@mui/icons-material/Warning';
+import SyncIcon from '@mui/icons-material/Sync';
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import api from '../api/axios';
 import AnimatedChartCard from '../components/AnimatedChartCard';
@@ -33,35 +37,78 @@ const Dashboard = () => {
   const [medicineStock, setMedicineStock] = useState([]);
   const [statusDist, setStatusDist] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [s, a, p, m, st] = await Promise.all([
-          api.get('/dashboard/stats'),
-          api.get('/dashboard/appointment-chart?days=7'),
-          api.get('/dashboard/patient-visits?months=6'),
-          api.get('/dashboard/medicine-stock'),
-          api.get('/dashboard/appointment-status'),
-        ]);
-        setStats(s.data.data);
-        setAppointmentChart(a.data.data);
-        setPatientVisits(p.data.data);
-        setMedicineStock(m.data.data);
-        setStatusDist(st.data.data);
-      } catch (err) {
-        // SEC-5 fix: do not log the raw axios error. The error object
-        // includes the request config (URL, headers — including the
-        // bearer token) and the response body which can carry patient
-        // data on 4xx responses. Swallow and let the loading state end
-        // so the page renders the empty fallback instead of stalling.
-      }
+  // UX-6: previously the catch block swallowed errors silently and the
+  // page rendered an empty-looking dashboard — indistinguishable from
+  // "no data". Now a failure surfaces an Alert with a Retry button,
+  // mirroring the Doctors.jsx:73 pattern. The raw axios error is still
+  // not logged (SEC-5: it carries the bearer token in config.headers).
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [s, a, p, m, st] = await Promise.all([
+        api.get('/dashboard/stats'),
+        api.get('/dashboard/appointment-chart?days=7'),
+        api.get('/dashboard/patient-visits?months=6'),
+        api.get('/dashboard/medicine-stock'),
+        api.get('/dashboard/appointment-status'),
+      ]);
+      setStats(s.data.data);
+      setAppointmentChart(a.data.data);
+      setPatientVisits(p.data.data);
+      setMedicineStock(m.data.data);
+      setStatusDist(st.data.data);
+    } catch (err) {
+      setError('Failed to load dashboard data. Please try again.');
+    } finally {
       setLoading(false);
-    };
-    fetchData();
+    }
   }, []);
 
-  if (loading) return <Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}><CircularProgress /></Box>;
+  useEffect(() => { fetchData(); }, [fetchData]);
+
+  if (loading) {
+    // UX-6: skeleton cards instead of a bare spinner so the layout
+    // doesn't jump when data resolves.
+    return (
+      <Box>
+        <Box sx={{ mb: 3 }}>
+          <Skeleton height={40} width={180} />
+          <Skeleton height={24} width={320} />
+        </Box>
+        <Grid container spacing={3} sx={{ mb: 4 }}>
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Grid size={{ xs: 12, sm: 6, md: 2.4 }} key={i}>
+              <Card><CardContent><Skeleton variant="rectangular" height={88} /></CardContent></Card>
+            </Grid>
+          ))}
+        </Grid>
+        <Grid container spacing={3}>
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Grid size={{ xs: 12, md: 6 }} key={i}>
+              <Card><CardContent><Skeleton variant="rectangular" height={300} /></CardContent></Card>
+            </Grid>
+          ))}
+        </Grid>
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box>
+        <Alert
+          severity="error"
+          sx={{ mb: 3 }}
+          action={<Button color="inherit" size="small" startIcon={<SyncIcon />} onClick={fetchData}>Retry</Button>}
+        >
+          {error}
+        </Alert>
+      </Box>
+    );
+  }
 
   const headerVariants = {
     hidden: { opacity: 0, y: -20 },

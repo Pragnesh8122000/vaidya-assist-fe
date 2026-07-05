@@ -165,15 +165,17 @@ describe('Dashboard', () => {
   });
 
   it('does not crash when the API errors out', async () => {
-    // Realistic failure: backend down, network blip, 5xx. The
-    // Dashboard's catch block should swallow the error and still
-    // render the empty state. Catching a thrown render here is the
-    // "you broke the empty state" regression net.
+    // UX-6: a fetch failure now surfaces an Alert+Retry (mirroring
+    // Doctors.jsx:73) instead of silently rendering an empty
+    // dashboard. The page must not throw, and the error must be
+    // visible so users can tell "failed" from "no data".
     const axios = (await import('../api/axios')).default;
     axios.get.mockRejectedValue(new Error('Network Error'));
     expect(() => renderDashboard()).not.toThrow();
     await waitFor(() => {
-      expect(screen.getByText('Total Patients')).toBeInTheDocument();
+      expect(screen.getByRole('alert')).toBeInTheDocument();
+      expect(screen.getByText(/failed to load dashboard data/i)).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /retry/i })).toBeInTheDocument();
     });
   });
 });

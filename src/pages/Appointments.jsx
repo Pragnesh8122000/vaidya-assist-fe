@@ -35,6 +35,7 @@ import api from '../api/axios';
 import { getSocket } from '../socket/socket';
 import ConfirmationDialog from '../components/ConfirmationDialog';
 import { EMPTY_APPOINTMENT_FORM } from '../types/forms';
+import { formatDate, toUTCDateInput } from '../utils/dateFormat';
 
 // §3.2 (OQ#3=Option B): 'Confirmed' added to match the backend enum. A
 // confirmed appointment is one staff has accepted from the Waiting queue —
@@ -131,13 +132,9 @@ const Appointments = () => {
     setEditing(apt);
     // Stored dates are UTC midnight; build the edit date from UTC components
     // so the input shows the original calendar day in every timezone.
-    const d = apt.date ? new Date(apt.date) : null;
-    const dateStr = d
-      ? `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`
-      : '';
     setForm({
       patient: apt.patient?._id || '',
-      date: dateStr,
+      date: toUTCDateInput(apt.date),
       time: apt.time, status: apt.status, reason: apt.reason || '', notes: apt.notes || ''
     });
     setDialogOpen(true);
@@ -185,8 +182,8 @@ const Appointments = () => {
           </TextField>
         </Box>
 
-        <TableContainer>
-          <Table>
+        <TableContainer sx={{ overflowX: 'auto' }}>
+          <Table sx={{ minWidth: 760 }}>
             <TableHead>
               <TableRow>
                 <TableCell>ID</TableCell>
@@ -224,7 +221,7 @@ const Appointments = () => {
                       </Tooltip>
                     </TableCell>
                     <TableCell>{apt.patient?.name || 'N/A'}</TableCell>
-                    <TableCell>{new Date(apt.date).toLocaleDateString()}</TableCell>
+                    <TableCell>{formatDate(apt.date)}</TableCell>
                     <TableCell>{apt.time}</TableCell>
                     <TableCell>{apt.reason}</TableCell>
                     <TableCell>
@@ -234,8 +231,8 @@ const Appointments = () => {
                       }} sx={{ cursor: 'pointer' }} />
                     </TableCell>
                     <TableCell align="right">
-                      <IconButton size="small" onClick={() => handleEdit(apt)}><EditIcon fontSize="small" /></IconButton>
-                      <IconButton size="small" color="error" onClick={() => setDeleteTarget(apt)}><DeleteIcon fontSize="small" /></IconButton>
+                      <IconButton onClick={() => handleEdit(apt)} aria-label="Edit appointment"><EditIcon /></IconButton>
+                      <IconButton color="error" onClick={() => setDeleteTarget(apt)} aria-label="Delete appointment"><DeleteIcon /></IconButton>
                     </TableCell>
                   </TableRow>
                 ))
