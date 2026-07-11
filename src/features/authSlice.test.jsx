@@ -8,6 +8,15 @@ import Login from '../pages/Login';
 import Dashboard from '../pages/Dashboard';
 
 // Mock the api module so tests don't hit a real network.
+vi.mock('@react-oauth/google', () => ({
+  GoogleLogin: ({ onSuccess }) => (
+    <button data-testid="google-login-button" type="button" onClick={() => onSuccess?.({ credential: 'mock' })}>
+      Google SSO
+    </button>
+  ),
+  GoogleOAuthProvider: ({ children }) => <>{children}</>,
+}));
+
 vi.mock('../api/axios', () => ({
   default: {
     get: vi.fn(),

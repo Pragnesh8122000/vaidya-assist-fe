@@ -85,6 +85,21 @@ export const register = createAsyncThunk(
   },
 );
 
+/** Google Sign-In: sends the Google ID token to the backend for verification. */
+export const googleLogin = createAsyncThunk(
+  'auth/googleLogin',
+  /** @param {string} idToken */
+  async (idToken, { rejectWithValue }) => {
+    try {
+      const { data } = await api.post('/auth/google', { idToken, role: 'doctor' });
+      persistTokens(data.data);
+      return /** @type {AuthResponse} */ (data.data);
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Google sign-in failed');
+    }
+  },
+);
+
 export const getMe = createAsyncThunk(
   'auth/getMe',
   async (_, { rejectWithValue }) => {
@@ -139,6 +154,18 @@ const authSlice = createSlice({
       .addCase(register.rejected, (state, action) => {
         state.loading = false;
         state.error = typeof action.payload === 'string' ? action.payload : 'Registration failed';
+        toast.error(state.error);
+      })
+      .addCase(googleLogin.pending, (state) => { state.loading = true; state.error = null; })
+      .addCase(googleLogin.fulfilled, (state, action) => {
+        state.loading = false;
+        state.isAuthenticated = true;
+        state.user = action.payload.user;
+        toast.success(`Welcome back, ${action.payload.user.name || 'Admin'}!`);
+      })
+      .addCase(googleLogin.rejected, (state, action) => {
+        state.loading = false;
+        state.error = typeof action.payload === 'string' ? action.payload : 'Google sign-in failed';
         toast.error(state.error);
       })
       .addCase(getMe.pending, (state) => { state.loading = true; })

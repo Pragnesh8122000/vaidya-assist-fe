@@ -52,6 +52,15 @@ const RoleRoute = ({ allowedRoles }) => {
 import { useSelector as _useSelector } from 'react-redux';
 const useSelectorSafe = _useSelector;
 
+vi.mock('@react-oauth/google', () => ({
+  GoogleLogin: ({ onSuccess }) => (
+    <button data-testid="google-login-button" type="button" onClick={() => onSuccess?.({ credential: 'mock' })}>
+      Google SSO
+    </button>
+  ),
+  GoogleOAuthProvider: ({ children }) => <>{children}</>,
+}));
+
 vi.mock('../api/axios', () => ({
   default: {
     get: vi.fn().mockResolvedValue({ data: { data: [], unreadCount: 0 } }),

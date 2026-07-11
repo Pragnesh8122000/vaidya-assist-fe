@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { GoogleLogin } from '@react-oauth/google';
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
@@ -12,12 +13,13 @@ import Alert from '@mui/material/Alert';
 import CircularProgress from '@mui/material/CircularProgress';
 import InputAdornment from '@mui/material/InputAdornment';
 import IconButton from '@mui/material/IconButton';
+import Divider from '@mui/material/Divider';
 import EmailIcon from '@mui/icons-material/Email';
 import LockIcon from '@mui/icons-material/Lock';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
-import { login, clearError } from '../features/authSlice';
+import { login, clearError, googleLogin } from '../features/authSlice';
 
 const Login = () => {
   const dispatch = useDispatch();
@@ -37,6 +39,22 @@ const Login = () => {
     } catch (err) {
       // Error toast is shown by the slice
     }
+  };
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    if (!credentialResponse.credential) return;
+    dispatch(clearError());
+    try {
+      await dispatch(googleLogin(credentialResponse.credential)).unwrap();
+    } catch {
+      // Error toast is shown by the slice — includes the specific "No account
+      // found for this email. Please contact your administrator." message.
+    }
+  };
+
+  const handleGoogleError = () => {
+    // User cancelled the Google popup or the flow was interrupted.
+    // No error message needed — just return to the login form.
   };
 
   const containerVariants = {
@@ -232,7 +250,21 @@ const Login = () => {
             </Box>
           </Box>
 
-          <Typography variant="body2" sx={{ textAlign: 'center', mt: 3, color: 'text.secondary' }}>
+          <Divider sx={{ my: 2.5 }}>or</Divider>
+
+          {/* Google Sign-In button */}
+          <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={handleGoogleError}
+              text="signin_with"
+              shape="rectangular"
+              size="large"
+              width="340"
+            />
+          </Box>
+
+          <Typography variant="body2" sx={{ textAlign: 'center', mt: 2, color: 'text.secondary' }}>
             Your data is encrypted and secure
           </Typography>
 
