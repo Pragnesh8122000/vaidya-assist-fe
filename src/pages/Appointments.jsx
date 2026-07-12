@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useSelector } from 'react-redux';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Card from '@mui/material/Card';
@@ -36,6 +37,7 @@ import { getSocket } from '../socket/socket';
 import ConfirmationDialog from '../components/ConfirmationDialog';
 import { EMPTY_APPOINTMENT_FORM } from '../types/forms';
 import { formatDate, toUTCDateInput } from '../utils/dateFormat';
+import { GUEST_APPOINTMENTS } from '../constants/guestData';
 
 // §3.2 (OQ#3=Option B): 'Confirmed' added to match the backend enum. A
 // confirmed appointment is one staff has accepted from the Waiting queue —
@@ -44,6 +46,7 @@ const statusColors = { Waiting: 'warning', Confirmed: 'info', 'In Consultation':
 const statuses = ['Waiting', 'Confirmed', 'In Consultation', 'Completed', 'Cancelled'];
 
 const Appointments = () => {
+  const { isGuest } = useSelector((state) => state.auth);
   const [appointments, setAppointments] = useState([]);
   const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -59,6 +62,12 @@ const Appointments = () => {
   const [deleting, setDeleting] = useState(false);
 
   const fetchAppointments = useCallback(async () => {
+    if (isGuest) {
+      setAppointments(GUEST_APPOINTMENTS);
+      setTotal(GUEST_APPOINTMENTS.length);
+      setLoading(false);
+      return;
+    }
     try {
       setLoading(true);
       const params = { page: page + 1, limit: 10 };
@@ -68,7 +77,7 @@ const Appointments = () => {
       setTotal(data.pagination.total);
     } catch (err) { toast.error('Failed to load appointments'); }
     setLoading(false);
-  }, [page, statusFilter]);
+  }, [page, statusFilter, isGuest]);
 
   const filteredAppointments = appointments.filter((apt) => {
     if (!search.trim()) return true;

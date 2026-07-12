@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useSelector } from 'react-redux';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Card from '@mui/material/Card';
@@ -31,8 +32,10 @@ import api from '../api/axios';
 import ConfirmationDialog from '../components/ConfirmationDialog';
 import { EMPTY_MEDICINE_FORM } from '../types/forms';
 import { formatDate, toUTCDateInput } from '../utils/dateFormat';
+import { GUEST_MEDICINES } from '../constants/guestData';
 
 const Medicines = () => {
+  const { isGuest } = useSelector((state) => state.auth);
   const [medicines, setMedicines] = useState([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
@@ -47,6 +50,12 @@ const Medicines = () => {
   const [deleting, setDeleting] = useState(false);
 
   const fetchMedicines = useCallback(async () => {
+    if (isGuest) {
+      setMedicines(GUEST_MEDICINES);
+      setTotal(GUEST_MEDICINES.length);
+      setLoading(false);
+      return;
+    }
     try {
       setLoading(true);
       const params = { page: page + 1, limit: 10 };
@@ -57,7 +66,7 @@ const Medicines = () => {
       setTotal(data.pagination.total);
     } catch (err) { toast.error('Failed to load medicines'); }
     setLoading(false);
-  }, [page, search, lowStockFilter]);
+  }, [page, search, lowStockFilter, isGuest]);
 
   useEffect(() => { fetchMedicines(); }, [fetchMedicines]);
 

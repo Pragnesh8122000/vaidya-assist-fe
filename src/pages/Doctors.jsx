@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useSelector } from 'react-redux';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Card from '@mui/material/Card';
@@ -13,8 +14,10 @@ import MedicalServicesIcon from '@mui/icons-material/MedicalServices';
 import EmailIcon from '@mui/icons-material/Email';
 import PhoneIcon from '@mui/icons-material/Phone';
 import { getDoctors } from '../api/doctors';
+import { GUEST_DOCTORS } from '../constants/guestData';
 
 const Doctors = () => {
+  const { isGuest } = useSelector((state) => state.auth);
   const [doctors, setDoctors] = useState([]);
   const [count, setCount] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -22,6 +25,18 @@ const Doctors = () => {
   const [search, setSearch] = useState('');
 
   useEffect(() => {
+    if (isGuest) {
+      const filtered = search
+        ? GUEST_DOCTORS.filter((d) =>
+            d.name.toLowerCase().includes(search.toLowerCase()) ||
+            d.email.toLowerCase().includes(search.toLowerCase()))
+        : GUEST_DOCTORS;
+      setDoctors(filtered);
+      setCount(filtered.length);
+      setLoading(false);
+      return;
+    }
+
     let cancelled = false;
     const load = async () => {
       setLoading(true);
@@ -46,7 +61,7 @@ const Doctors = () => {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [search]);
+  }, [search, isGuest]);
 
   return (
     <Box sx={{ pt: 2, pb: 6 }}>

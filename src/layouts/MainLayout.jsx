@@ -37,12 +37,15 @@ import LightModeIcon from '@mui/icons-material/LightMode';
 import LogoutIcon from '@mui/icons-material/Logout';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import DescriptionIcon from '@mui/icons-material/Description';
-import { logout } from '../features/authSlice';
+import Chip from '@mui/material/Chip';
+import LockOutlineIcon from '@mui/icons-material/LockOutline';
+import { logout, exitGuestMode } from '../features/authSlice';
 import { toggleSidebar, toggleDarkMode } from '../features/uiSlice';
 import { openChat as openAgentChat } from '../features/agentChatSlice';
 import api from '../api/axios';
 import AgentChatWidget from '../components/AgentChatWidget';
 import { ROLES, ALL_STAFF_ROLES, resolveRoleSlug } from '../types/auth';
+import { GUEST_RESTRICTED_ROUTES, GUEST_RESTRICTION_MESSAGES } from '../constants/guestData';
 
 const DRAWER_WIDTH = 260;
 const MINI_WIDTH = 72;
@@ -81,7 +84,7 @@ const MainLayout = () => {
   const location = useLocation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const { user } = useSelector((state) => state.auth);
+  const { user, isGuest } = useSelector((state) => state.auth);
   const { sidebarOpen, darkMode } = useSelector((state) => state.ui);
   const [notifAnchor, setNotifAnchor] = useState(null);
   const [userAnchor, setUserAnchor] = useState(null);
@@ -90,8 +93,8 @@ const MainLayout = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
-    fetchNotifications();
-  }, []);
+    if (!isGuest) fetchNotifications();
+  }, [isGuest]);
 
   const fetchNotifications = async () => {
     try {
@@ -107,7 +110,11 @@ const MainLayout = () => {
   };
 
   const handleLogout = () => {
-    dispatch(logout());
+    if (isGuest) {
+      dispatch(exitGuestMode());
+    } else {
+      dispatch(logout());
+    }
     navigate('/login');
   };
 
@@ -125,6 +132,9 @@ const MainLayout = () => {
             <Typography variant="h6" fontWeight={700} noWrap sx={{ color: 'primary.main' }}>
               Vaidya Assist
             </Typography>
+            {isGuest && sidebarOpen && (
+              <Chip label="Demo" size="small" color="warning" variant="outlined" sx={{ ml: 0.5, fontSize: '0.65rem', height: 20 }} />
+            )}
           </>
         )}
         {!isMobile && (
@@ -140,27 +150,44 @@ const MainLayout = () => {
       <List component="nav" aria-label="Main navigation" sx={{ flex: 1, px: 1, py: 1 }}>
         {items.map((item) => {
           const isActive = location.pathname === item.path;
+          const isRestricted = isGuest && GUEST_RESTRICTED_ROUTES.includes(item.path);
           return (
-            <Tooltip key={item.text} title={!sidebarOpen ? item.text : ''} placement="right">
+            <Tooltip key={item.text} title={!sidebarOpen ? item.text : isRestricted ? `${item.text} (sign in required)` : ''} placement="right">
               <ListItemButton
-                onClick={() => { navigate(item.path); if (isMobile) setMobileOpen(false); }}
+                onClick={() => {
+                  if (isRestricted) {
+                    const msg = GUEST_RESTRICTION_MESSAGES[item.path] || GUEST_RESTRICTION_MESSAGES.default;
+                    import('react-toastify').then(({ toast }) => toast.info(`${msg.title}. Sign in to access.`, { autoClose: 4000 }));
+                    return;
+                  }
+                  navigate(item.path);
+                  if (isMobile) setMobileOpen(false);
+                }}
                 selected={isActive}
                 aria-current={isActive ? 'page' : undefined}
                 sx={{
                   borderRadius: 2, mb: 0.5, minHeight: 44,
                   justifyContent: sidebarOpen ? 'initial' : 'center',
+                  opacity: isRestricted ? 0.6 : 1,
                   '&.Mui-selected': {
                     bgcolor: 'action.hover',
                     borderLeft: '4px solid',
                     borderColor: 'secondary.main',
-                    pl: '12px', // compensate the 4px border so icon/text alignment holds
+                    pl: '12px',
                     '& .MuiListItemIcon-root': { color: 'primary.main' },
                     '& .MuiListItemText-primary': { color: 'primary.main', fontWeight: 600 },
                   },
                 }}
               >
-                <ListItemIcon sx={{ minWidth: sidebarOpen ? 40 : 0, justifyContent: 'center' }}>{item.icon}</ListItemIcon>
-                {sidebarOpen && <ListItemText primary={item.text} primaryTypographyProps={{ fontSize: 14 }} />}
+                <ListItemIcon sx={{ minWidth: sidebarOpen ? 40 : 0, justifyContent: 'center' }}>
+                  {isRestricted ? <LockOutlineIcon sx={{ fontSize: 20 }} /> : item.icon}
+                </ListItemIcon>
+                {sidebarOpen && (
+                  <ListItemText
+                    primary={item.text}
+                    primaryTypographyProps={{ fontSize: 14 }}
+                  />
+                )}
               </ListItemButton>
             </Tooltip>
           );
@@ -266,10 +293,17 @@ const MainLayout = () => {
               variant="contained"
               size="small"
               startIcon={<MedicalServicesIcon />}
-              onClick={() => dispatch(openAgentChat())}
+              onClick={() => {
+                if (isGuest) {
+                  import('react-toastify').then(({ toast }) => toast.info('Sign in to use the AI assistant.', { autoClose: 3000 }));
+                  return;
+                }
+                dispatch(openAgentChat());
+              }}
+              disabled={isGuest}
               sx={{ mr: 1, textTransform: 'none', fontWeight: 600, borderRadius: 2, px: 1.5 }}
             >
-              Assistant
+              {isGuest ? 'Demo' : 'Assistant'}
             </Button>
 
             <IconButton onClick={(e) => setUserAnchor(e.currentTarget)} aria-label="Account menu">
@@ -291,10 +325,18 @@ const MainLayout = () => {
         {/* A11Y-2 fix: target the skip-link's `#main-content` hash and
             turn the main region into a labelled landmark. */}
         <Box component="main" id="main-content" tabIndex={-1} aria-label="Main content" sx={{ flex: 1, overflow: 'auto', p: 3, outline: 'none' }}>
+          {isGuest && (
+            <Box sx={{ mb: 2, p: 1.5, bgcolor: 'warning.lighter', borderRadius: 1, display: 'flex', alignItems: 'center', gap: 1, justifyContent: 'center' }}>
+              <Chip label="Demo Mode" color="warning" size="small" sx={{ fontWeight: 600 }} />
+              <Typography variant="body2" color="text.secondary">
+                You're exploring with sample data. <Button size="small" variant="text" sx={{ textTransform: 'none', p: 0, minWidth: 'auto', fontWeight: 600, color: 'warning.dark' }} onClick={() => { dispatch(exitGuestMode()); navigate('/login'); }}>Sign in</Button> for full access.
+              </Typography>
+            </Box>
+          )}
           <Outlet />
         </Box>
 
-        <AgentChatWidget />
+        {!isGuest && <AgentChatWidget />}
       </Box>
     </Box>
   );

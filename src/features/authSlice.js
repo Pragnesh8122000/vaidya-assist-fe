@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { toast } from 'react-toastify';
 import api, { setActiveClinicId } from '../api/axios';
+import { GUEST_USER } from '../constants/guestData';
 
 // TS-1 fix: explicit AuthState interface and createAsyncThunk generics so
 // the rejected handler can be typed (see authSlice.reducer below).
@@ -29,6 +30,7 @@ const initialState = {
   isAuthenticated: false,
   loading: false,
   error: null,
+  isGuest: false,
 };
 
 /**
@@ -127,6 +129,20 @@ const authSlice = createSlice({
       setActiveClinicId(null);
     },
     clearError: (state) => { state.error = null; },
+    enterGuestMode: (state) => {
+      state.isGuest = true;
+      state.isAuthenticated = true;
+      state.user = GUEST_USER;
+      state.error = null;
+    },
+    exitGuestMode: (state) => {
+      state.isGuest = false;
+      state.user = null;
+      state.isAuthenticated = false;
+      state.error = null;
+      clearTokens();
+      setActiveClinicId(null);
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -134,6 +150,7 @@ const authSlice = createSlice({
       .addCase(login.fulfilled, (state, action) => {
         state.loading = false;
         state.isAuthenticated = true;
+        state.isGuest = false;
         state.user = action.payload.user;
         toast.success(`Welcome back, ${action.payload.user.name || 'Admin'}!`);
       })
@@ -148,6 +165,7 @@ const authSlice = createSlice({
       .addCase(register.fulfilled, (state, action) => {
         state.loading = false;
         state.isAuthenticated = true;
+        state.isGuest = false;
         state.user = action.payload.user;
         toast.success('Account created successfully!');
       })
@@ -160,6 +178,7 @@ const authSlice = createSlice({
       .addCase(googleLogin.fulfilled, (state, action) => {
         state.loading = false;
         state.isAuthenticated = true;
+        state.isGuest = false;
         state.user = action.payload.user;
         toast.success(`Welcome back, ${action.payload.user.name || 'Admin'}!`);
       })
@@ -188,5 +207,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { logout, clearError } = authSlice.actions;
+export const { logout, clearError, enterGuestMode, exitGuestMode } = authSlice.actions;
 export default authSlice.reducer;

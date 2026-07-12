@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useSelector } from 'react-redux';
 import { motion } from 'framer-motion';
 import { useTheme } from '@mui/material/styles';
 import Grid from '@mui/material/Grid';
@@ -19,6 +20,7 @@ import SyncIcon from '@mui/icons-material/Sync';
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import api from '../api/axios';
 import AnimatedChartCard from '../components/AnimatedChartCard';
+import { GUEST_DASHBOARD_STATS } from '../constants/guestData';
 
 // A11Y-6 fix: the previous "COLORS" array was 6 hardcoded hex strings
 // that re-asserted the warm-manuscript palette inline, which (a)
@@ -31,6 +33,7 @@ const STAT_TOKENS = ['statPrimary', 'statInfo', 'statAccent', 'statBrass', 'stat
 
 const Dashboard = () => {
   const theme = useTheme();
+  const { isGuest } = useSelector((state) => state.auth);
   const [stats, setStats] = useState(null);
   const [appointmentChart, setAppointmentChart] = useState([]);
   const [patientVisits, setPatientVisits] = useState([]);
@@ -39,12 +42,26 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Guest mode: use static data, no API calls
+  useEffect(() => {
+    if (isGuest) {
+      setStats(GUEST_DASHBOARD_STATS);
+      setAppointmentChart(GUEST_DASHBOARD_STATS.appointmentChart);
+      setStatusDist(GUEST_DASHBOARD_STATS.statusDist);
+      setPatientVisits([]);
+      setMedicineStock([]);
+      setLoading(false);
+      return;
+    }
+  }, [isGuest]);
+
   // UX-6: previously the catch block swallowed errors silently and the
   // page rendered an empty-looking dashboard — indistinguishable from
   // "no data". Now a failure surfaces an Alert with a Retry button,
   // mirroring the Doctors.jsx:73 pattern. The raw axios error is still
   // not logged (SEC-5: it carries the bearer token in config.headers).
   const fetchData = useCallback(async () => {
+    if (isGuest) return; // Guest data loaded above
     setLoading(true);
     setError(null);
     try {
@@ -67,7 +84,7 @@ const Dashboard = () => {
     }
   }, []);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => { fetchData(); }, [fetchData, isGuest]);
 
   if (loading) {
     // UX-6: skeleton cards instead of a bare spinner so the layout

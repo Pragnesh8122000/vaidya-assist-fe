@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -19,12 +19,21 @@ import LockIcon from '@mui/icons-material/Lock';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
-import { login, clearError, googleLogin } from '../features/authSlice';
+import { login, clearError, googleLogin, enterGuestMode } from '../features/authSlice';
 
 const Login = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { loading, error } = useSelector((state) => state.auth);
+
+  // Check for ?guest=true query param to auto-enter guest mode
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('guest') === 'true') {
+      dispatch(enterGuestMode());
+      navigate('/', { replace: true });
+    }
+  }, [dispatch, navigate]);
   const [form, setForm] = useState({ email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
 
@@ -266,6 +275,30 @@ const Login = () => {
 
           <Typography variant="body2" sx={{ textAlign: 'center', mt: 2, color: 'text.secondary' }}>
             Your data is encrypted and secure
+          </Typography>
+
+          <Divider sx={{ my: 2.5 }}>or</Divider>
+
+          <Button
+            variant="outlined"
+            fullWidth
+            size="large"
+            onClick={() => { dispatch(enterGuestMode()); navigate('/'); }}
+            sx={{
+              py: 1.5,
+              fontSize: '0.95rem',
+              borderColor: '#C8862A',
+              color: '#C8862A',
+              '&:hover': {
+                borderColor: '#A06B1F',
+                bgcolor: 'rgba(200, 134, 42, 0.08)',
+              },
+            }}
+          >
+            Try Demo — No Account Needed
+          </Button>
+          <Typography variant="caption" sx={{ textAlign: 'center', display: 'block', mt: 1, color: 'text.secondary' }}>
+            Explore the portal with sample data
           </Typography>
 
           <Typography variant="body2" sx={{ textAlign: 'center', mt: 2 }}>
