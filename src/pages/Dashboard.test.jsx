@@ -1,8 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
+import { Provider } from 'react-redux';
+import { configureStore } from '@reduxjs/toolkit';
 import { ThemeProvider } from '@mui/material/styles';
 import { getTheme } from '../theme/theme';
 import Dashboard from './Dashboard';
+import authReducer from '../features/authSlice';
 
 // Test Gap P2 — Dashboard chart rendering. The Dashboard mounts five
 // recharts containers (BarChart × 2, PieChart, LineChart) plus five
@@ -40,12 +43,21 @@ vi.mock('framer-motion', () => ({
   }),
 }));
 
-const renderDashboard = () => {
+const makeStore = (preloaded) =>
+  configureStore({
+    reducer: { auth: authReducer },
+    preloadedState: preloaded,
+  });
+
+const renderDashboard = (preloaded) => {
   const theme = getTheme('light');
+  const store = makeStore(preloaded);
   return render(
-    <ThemeProvider theme={theme}>
-      <Dashboard />
-    </ThemeProvider>,
+    <Provider store={store}>
+      <ThemeProvider theme={theme}>
+        <Dashboard />
+      </ThemeProvider>
+    </Provider>,
   );
 };
 
@@ -97,7 +109,7 @@ describe('Dashboard', () => {
   it('renders the page title', async () => {
     const axios = (await import('../api/axios')).default;
     mockAllEndpoints(axios);
-    renderDashboard();
+    renderDashboard({ auth: { user: null, isAuthenticated: false, isGuest: false, loading: false, error: null } });
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /dashboard/i, level: 4 })).toBeInTheDocument();
     });
@@ -106,7 +118,7 @@ describe('Dashboard', () => {
   it('shows each stat card label with its numeric value', async () => {
     const axios = (await import('../api/axios')).default;
     mockAllEndpoints(axios, { stats: fullStats });
-    renderDashboard();
+    renderDashboard({ auth: { user: null, isAuthenticated: false, isGuest: false, loading: false, error: null } });
     // The five stat labels. The numbers are the h3 in each card;
     // checking that all five labels appear verifies the loading
     // state has resolved and the cards mounted.
@@ -135,7 +147,7 @@ describe('Dashboard', () => {
       medicineStock: fullMedicineStock,
       statusDist: fullStatusDist,
     });
-    renderDashboard();
+    renderDashboard({ auth: { user: null, isAuthenticated: false, isGuest: false, loading: false, error: null } });
     await waitFor(() => {
       // The chart titles are rendered by AnimatedChartCard inside the
       // Dashboard's <Grid>. If a chart is removed or renamed, the
@@ -153,7 +165,7 @@ describe('Dashboard', () => {
     // before they have any data.
     const axios = (await import('../api/axios')).default;
     mockAllEndpoints(axios);
-    renderDashboard();
+    renderDashboard({ auth: { user: null, isAuthenticated: false, isGuest: false, loading: false, error: null } });
     await waitFor(() => {
       // All five stat cards default to 0 when the payload is missing.
       // We don't pin the exact count of zeros (other UI surfaces also

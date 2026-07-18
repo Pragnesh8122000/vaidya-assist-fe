@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { useSelector } from 'react-redux';
+import React, { useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Card from '@mui/material/Card';
@@ -13,55 +13,47 @@ import Chip from '@mui/material/Chip';
 import MedicalServicesIcon from '@mui/icons-material/MedicalServices';
 import EmailIcon from '@mui/icons-material/Email';
 import PhoneIcon from '@mui/icons-material/Phone';
-import { getDoctors } from '../api/doctors';
+import { getDoctors, setDoctorsSearch, clearDoctorsError } from '../features/doctorsSlice';
 import { GUEST_DOCTORS } from '../constants/guestData';
 
+const SEARCH_DEBOUNCE_MS = 300;
+
 const Doctors = () => {
+  const dispatch = useDispatch();
   const { isGuest } = useSelector((state) => state.auth);
-  const [doctors, setDoctors] = useState([]);
-  const [count, setCount] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [search, setSearch] = useState('');
+  const { data: doctors, count, loading, error, search } = useSelector((state) => state.doctors);
 
   useEffect(() => {
     if (isGuest) {
-      const filtered = search
-        ? GUEST_DOCTORS.filter((d) =>
-            d.name.toLowerCase().includes(search.toLowerCase()) ||
-            d.email.toLowerCase().includes(search.toLowerCase()))
-        : GUEST_DOCTORS;
-      setDoctors(filtered);
-      setCount(filtered.length);
-      setLoading(false);
-      return;
+      // Guest mode uses static sample data, no API call.
+      dispatch(setDoctorsSearch(''));
+      return undefined;
     }
 
     let cancelled = false;
-    const load = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const result = await getDoctors({ search });
-        if (!cancelled) {
-          setDoctors(result.data || []);
-          setCount(result.count || 0);
-        }
-      } catch (err) {
-        if (!cancelled) {
-          setError(err.response?.data?.message || 'Failed to load doctors');
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    };
+    const timer = setTimeout(() => {
+      if (!cancelled) dispatch(getDoctors({ search }));
+    }, SEARCH_DEBOUNCE_MS);
 
-    const timer = setTimeout(load, 300);
     return () => {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [search, isGuest]);
+  }, [search, isGuest, dispatch]);
+
+  const handleSearchChange = (e) => {
+    dispatch(setDoctorsSearch(e.target.value));
+  };
+
+  const displayedDoctors = isGuest
+    ? GUEST_DOCTORS.filter((d) =>
+        search
+          ? d.name.toLowerCase().includes(search.toLowerCase()) ||
+            d.email.toLowerCase().includes(search.toLowerCase())
+          : true,
+      )
+    : doctors;
+  const displayedCount = isGuest ? displayedDoctors.length : count;
 
   return (
     <Box sx={{ pt: 2, pb: 6 }}>
@@ -72,7 +64,7 @@ const Doctors = () => {
             Doctors
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            {count} doctor{count !== 1 ? 's' : ''} available
+            {displayedCount} doctor{displayedCount !== 1 ? 's' : ''} available
           </Typography>
         </Box>
       </Box>
@@ -81,11 +73,15 @@ const Doctors = () => {
         fullWidth
         placeholder="Search doctors by name or email..."
         value={search}
-        onChange={(e) => setSearch(e.target.value)}
+        onChange={handleSearchChange}
         sx={{ mb: 3, maxWidth: 500 }}
       />
 
-      {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
+      {error && (
+        <Alert severity="error" sx={{ mb: 3 }} onClose={() => dispatch(clearDoctorsError())}>
+          {error}
+        </Alert>
+      )}
 
       {loading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
@@ -93,7 +89,7 @@ const Doctors = () => {
         </Box>
       ) : (
         <Grid container spacing={3}>
-          {doctors.length === 0 ? (
+          {displayedDoctors.length === 0 ? (
             <Grid size={12}>
               <Card sx={{ p: 4, textAlign: 'center' }}>
                 <Typography variant="body1" color="text.secondary">
@@ -102,7 +98,7 @@ const Doctors = () => {
               </Card>
             </Grid>
           ) : (
-            doctors.map((doctor) => (
+            displayedDoctors.map((doctor) => (
               <Grid size={{ xs: 12, sm: 6, lg: 4 }} key={doctor._id}>
                 <Card sx={{ height: '100%', borderRadius: 3, boxShadow: 2 }}>
                   <CardContent sx={{ p: 3 }}>

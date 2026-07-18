@@ -19,8 +19,14 @@ import WarningIcon from '@mui/icons-material/Warning';
 import SyncIcon from '@mui/icons-material/Sync';
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import api from '../api/axios';
+import { getSocket } from '../socket/socket';
 import AnimatedChartCard from '../components/AnimatedChartCard';
 import { GUEST_DASHBOARD_STATS } from '../constants/guestData';
+
+// UX-7: debounce rapid dashboard-refresh socket events so a burst of
+// appointment changes (e.g. staff updating many statuses) triggers a single
+// refetch instead of repeated full-screen loading cycles.
+const REFRESH_DEBOUNCE_MS = 500;
 
 // A11Y-6 fix: the previous "COLORS" array was 6 hardcoded hex strings
 // that re-asserted the warm-manuscript palette inline, which (a)
@@ -85,6 +91,29 @@ const Dashboard = () => {
   }, []);
 
   useEffect(() => { fetchData(); }, [fetchData, isGuest]);
+
+  // UX-7: keep dashboard stats current when other staff/patients mutate
+  // appointments in the same clinic. The server emits a payload-free
+  // `dashboard:refresh` event to the clinic room; we debounce and refetch.
+  useEffect(() => {
+    if (isGuest) return undefined;
+    const socket = getSocket();
+    if (!socket) return undefined;
+
+    let timer = null;
+    const handleRefresh = () => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => {
+        fetchData();
+      }, REFRESH_DEBOUNCE_MS);
+    };
+
+    socket.on('dashboard:refresh', handleRefresh);
+    return () => {
+      socket.off('dashboard:refresh', handleRefresh);
+      if (timer) clearTimeout(timer);
+    };
+  }, [fetchData, isGuest]);
 
   if (loading) {
     // UX-6: skeleton cards instead of a bare spinner so the layout

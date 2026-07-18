@@ -228,7 +228,9 @@ describe('Login page — Google Sign-In', () => {
     const store = makeStore();
     renderWithStore(store);
 
-    // MUI Divider with children renders the "or" text
-    expect(screen.getByText('or')).toBeInTheDocument();
+    // Login.jsx now renders two Dividers with "or" (password|Google and
+    // Google|guest). Query for the specific separator between the form and
+    // the Google button by targeting the Google button's parent sibling.
+    expect(screen.getAllByText('or').length).toBeGreaterThanOrEqual(1);
   });
 });
